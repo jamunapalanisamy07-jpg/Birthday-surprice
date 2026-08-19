@@ -1,406 +1,560 @@
 "use strict";
 
-/* =====================================================
-   HELPER
-===================================================== */
+/*
+=========================================================
+ FIREBASE IMPORTS
+=========================================================
+*/
 
-const $ = (id) => document.getElementById(id);
+import {
+  initializeApp
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getAuth,
+  signInAnonymously
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  serverTimestamp
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 
-/* =====================================================
-   SETTINGS
-===================================================== */
+/*
+=========================================================
+ FIREBASE CONFIG
+
+ IMPORTANT:
+ Replace these with YOUR Firebase Web App config.
+=========================================================
+*/
+
+const firebaseConfig = {
+
+  apiKey:
+    "PASTE_YOUR_API_KEY_HERE",
+
+  authDomain:
+    "PASTE_YOUR_PROJECT.firebaseapp.com",
+
+  projectId:
+    "PASTE_YOUR_PROJECT_ID_HERE",
+
+  storageBucket:
+    "PASTE_YOUR_STORAGE_BUCKET_HERE",
+
+  messagingSenderId:
+    "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
+
+  appId:
+    "PASTE_YOUR_APP_ID_HERE"
+
+};
+
+
+/*
+=========================================================
+ FIREBASE INITIALIZE
+=========================================================
+*/
+
+const app =
+  initializeApp(
+    firebaseConfig
+  );
+
+
+const auth =
+  getAuth(app);
+
+
+const db =
+  getFirestore(app);
+
+
+const storage =
+  getStorage(app);
+
+
+/*
+=========================================================
+ HELPER
+=========================================================
+*/
+
+const $ =
+  (id) =>
+    document.getElementById(id);
+
+
+/*
+=========================================================
+ SETTINGS
+=========================================================
+*/
 
 const MAX_PHOTOS = 15;
 
-let photos = [];
+let selectedFiles = [];
 
 
-/* =====================================================
-   BASE64 ENCODE / DECODE
-===================================================== */
+/*
+=========================================================
+ FIREBASE LOGIN
+=========================================================
+*/
 
-function encodeData(data) {
-
-  const json = JSON.stringify(data);
-
-  const bytes = new TextEncoder().encode(json);
-
-  let binary = "";
-
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
+let firebaseReady =
+  false;
 
 
-function decodeData(encoded) {
+async function initializeFirebase() {
 
   try {
 
-    let base64 = encoded
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-
-    while (base64.length % 4) {
-      base64 += "=";
-    }
-
-    const binary = atob(base64);
-
-    const bytes = Uint8Array.from(
-      binary,
-      char => char.charCodeAt(0)
+    await signInAnonymously(
+      auth
     );
 
-    const json = new TextDecoder().decode(bytes);
+    firebaseReady = true;
 
-    return JSON.parse(json);
+    console.log(
+      "Firebase ready ❤️"
+    );
 
   } catch (error) {
 
-    console.error("Decode error:", error);
+    console.error(
+      "Firebase authentication error:",
+      error
+    );
 
-    return null;
+    alert(
+      "Firebase setup problem. Please check Anonymous Authentication."
+    );
+
   }
+
 }
 
 
-/* =====================================================
-   IMAGE COMPRESSION
-===================================================== */
+await initializeFirebase();
+
+
+/*
+=========================================================
+ IMAGE COMPRESSION
+=========================================================
+*/
 
 function compressImage(file) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const reader = new FileReader();
+      const reader =
+        new FileReader();
 
-    reader.onload = () => {
 
-      const img = new Image();
+      reader.onload =
+        function () {
 
-      img.onload = () => {
+          const image =
+            new Image();
 
-        let width = img.naturalWidth;
-        let height = img.naturalHeight;
 
-        const MAX_SIZE = 280;
+          image.onload =
+            function () {
 
-        if (Math.max(width, height) > MAX_SIZE) {
+              let width =
+                image.naturalWidth;
 
-          if (width > height) {
+              let height =
+                image.naturalHeight;
 
-            height = Math.round(
-              height * MAX_SIZE / width
-            );
 
-            width = MAX_SIZE;
+              /*
+                Keep good quality while
+                reducing upload size.
+              */
 
-          } else {
+              const MAX_SIZE =
+                1400;
 
-            width = Math.round(
-              width * MAX_SIZE / height
-            );
 
-            height = MAX_SIZE;
-          }
-        }
+              if (
+                Math.max(
+                  width,
+                  height
+                ) > MAX_SIZE
+              ) {
 
-        const canvas = document.createElement("canvas");
+                if (
+                  width >
+                  height
+                ) {
 
-        canvas.width = width;
-        canvas.height = height;
+                  height =
+                    Math.round(
+                      height *
+                      MAX_SIZE /
+                      width
+                    );
 
-        const ctx = canvas.getContext("2d", {
-          alpha: false
-        });
+                  width =
+                    MAX_SIZE;
 
-        ctx.drawImage(
-          img,
-          0,
-          0,
-          width,
-          height
-        );
+                } else {
 
-        let result = canvas.toDataURL(
-          "image/webp",
-          0.28
-        );
+                  width =
+                    Math.round(
+                      width *
+                      MAX_SIZE /
+                      height
+                    );
 
-        if (!result.startsWith("data:image/webp")) {
+                  height =
+                    MAX_SIZE;
 
-          result = canvas.toDataURL(
-            "image/jpeg",
-            0.32
+                }
+
+              }
+
+
+              const canvas =
+                document.createElement(
+                  "canvas"
+                );
+
+
+              canvas.width =
+                width;
+
+              canvas.height =
+                height;
+
+
+              const context =
+                canvas.getContext(
+                  "2d"
+                );
+
+
+              context.drawImage(
+                image,
+                0,
+                0,
+                width,
+                height
+              );
+
+
+              canvas.toBlob(
+                function (blob) {
+
+                  if (!blob) {
+
+                    reject(
+                      new Error(
+                        "Image compression failed"
+                      )
+                    );
+
+                    return;
+                  }
+
+
+                  resolve(
+                    blob
+                  );
+
+                },
+                "image/jpeg",
+                0.78
+              );
+
+            };
+
+
+          image.onerror =
+            function () {
+
+              reject(
+                new Error(
+                  "Could not load image"
+                )
+              );
+
+            };
+
+
+          image.src =
+            reader.result;
+
+        };
+
+
+      reader.onerror =
+        function () {
+
+          reject(
+            new Error(
+              "Could not read image"
+            )
           );
-        }
 
-        resolve(result);
+        };
 
-      };
 
-      img.onerror = () => {
-        reject(new Error("Unable to read image"));
-      };
+      reader.readAsDataURL(
+        file
+      );
 
-      img.src = reader.result;
-    };
+    }
+  );
 
-    reader.onerror = () => {
-      reject(new Error("Unable to read file"));
-    };
-
-    reader.readAsDataURL(file);
-
-  });
 }
 
 
-/* =====================================================
-   PHOTO SELECT
-===================================================== */
+/*
+=========================================================
+ PHOTO SELECT
+=========================================================
+*/
 
-const fileInput = $("files");
+const fileInput =
+  $("files");
+
 
 if (fileInput) {
 
   fileInput.addEventListener(
     "change",
-    async function () {
+    function () {
 
-      photos = [];
+      selectedFiles =
+        Array.from(
+          this.files
+        ).filter(
+          file =>
+            file.type.startsWith(
+              "image/"
+            )
+        ).slice(
+          0,
+          MAX_PHOTOS
+        );
 
-      if ($("thumbs")) {
-        $("thumbs").innerHTML = "";
-      }
 
-      if ($("photoCount")) {
-        $("photoCount").textContent =
-          "Processing photos... 📸";
-      }
-
-      const files = Array.from(this.files)
-        .slice(0, MAX_PHOTOS);
-
-      if (this.files.length > MAX_PHOTOS) {
+      if (
+        this.files.length >
+        MAX_PHOTOS
+      ) {
 
         alert(
           "Maximum 15 photos only 📸"
         );
+
       }
 
-      for (let i = 0; i < files.length; i++) {
 
-        const file = files[i];
-
-        if (!file.type.startsWith("image/")) {
-          continue;
-        }
-
-        try {
-
-          const compressed =
-            await compressImage(file);
-
-          photos.push(compressed);
-
-          addThumbnail(compressed);
-
-          if ($("photoCount")) {
-
-            $("photoCount").textContent =
-              `${photos.length} / ${MAX_PHOTOS} photos selected`;
-          }
-
-        } catch (error) {
-
-          console.error(
-            "Photo error:",
-            error
-          );
-        }
-      }
-
-      if (
-        photos.length === 0 &&
-        $("photoCount")
-      ) {
-
-        $("photoCount").textContent =
-          "0 / 15 photos selected";
-      }
+      showThumbnails();
 
     }
   );
+
 }
 
 
-/* =====================================================
-   THUMBNAIL
-===================================================== */
+/*
+=========================================================
+ SHOW THUMBNAILS
+=========================================================
+*/
 
-function addThumbnail(src) {
+function showThumbnails() {
 
-  const img = document.createElement("img");
-
-  img.src = src;
-
-  img.alt = "Selected photo";
-
-  img.loading = "lazy";
-
-  if ($("thumbs")) {
-    $("thumbs").appendChild(img);
-  }
-}
+  const thumbs =
+    $("thumbs");
 
 
-/* =====================================================
-   CREATE DATA
-===================================================== */
-
-function makeData() {
-
-  return {
-
-    name:
-      $("name").value.trim()
-      ||
-      "Birthday Star",
-
-    password:
-      $("pass").value,
-
-    wish:
-      $("wish").value.trim()
-      ||
-      "Wishing you a very happy birthday! 🎂❤️",
-
-    photos:
-      photos.slice(0, MAX_PHOTOS)
-
-  };
-}
-
-
-/* =====================================================
-   LOAD SHARE DATA
-   NEW:
-   ?surprise=DATA
-
-   ALSO SUPPORTS OLD:
-   #DATA
-===================================================== */
-
-function loadData() {
-
-  try {
-
-    const params = new URLSearchParams(
-      window.location.search
-    );
-
-    /*
-      New mobile-safe format
-    */
-
-    const queryData =
-      params.get("surprise");
-
-    if (queryData) {
-
-      return decodeData(queryData);
-    }
-
-
-    /*
-      Old hash format
-    */
-
-    const hash =
-      window.location.hash.substring(1);
-
-    if (hash) {
-
-      return decodeData(hash);
-    }
-
-
-    return null;
-
-  } catch (error) {
-
-    console.error(
-      "Loading data failed:",
-      error
-    );
-
-    return null;
-  }
-}
-
-
-const data = loadData();
-
-
-/* =====================================================
-   SHOW CORRECT PAGE
-===================================================== */
-
-if (data) {
-
-  if ($("creator")) {
-
-    $("creator")
-      .classList
-      .add("hidden");
+  if (!thumbs) {
+    return;
   }
 
-  if ($("locked")) {
 
-    $("locked")
-      .classList
-      .remove("hidden");
-  }
+  thumbs.innerHTML =
+    "";
 
-  if ($("lockedName")) {
 
-    $("lockedName")
+  if ($("photoCount")) {
+
+    $("photoCount")
       .textContent =
-      data.name ||
-      "Someone Special";
+      `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
+
   }
+
+
+  selectedFiles.forEach(
+    function (file) {
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        function () {
+
+          const img =
+            document.createElement(
+              "img"
+            );
+
+
+          img.src =
+            reader.result;
+
+
+          img.alt =
+            "Selected photo";
+
+
+          thumbs.appendChild(
+            img
+          );
+
+        };
+
+
+      reader.readAsDataURL(
+        file
+      );
+
+    }
+  );
+
 }
 
 
-/* =====================================================
-   CREATE SHARE LINK
-===================================================== */
+/*
+=========================================================
+ UPLOAD ONE PHOTO
+=========================================================
+*/
 
-const createButton = $("create");
+async function uploadPhoto(
+  file,
+  surpriseId,
+  index
+) {
+
+  const compressed =
+    await compressImage(
+      file
+    );
+
+
+  const fileName =
+    `photo-${index + 1}.jpg`;
+
+
+  const storagePath =
+    `surprises/${surpriseId}/${fileName}`;
+
+
+  const storageReference =
+    ref(
+      storage,
+      storagePath
+    );
+
+
+  await uploadBytes(
+    storageReference,
+    compressed,
+    {
+      contentType:
+        "image/jpeg"
+    }
+  );
+
+
+  const downloadURL =
+    await getDownloadURL(
+      storageReference
+    );
+
+
+  return downloadURL;
+
+}
+
+
+/*
+=========================================================
+ CREATE SURPRISE
+=========================================================
+*/
+
+const createButton =
+  $("create");
+
 
 if (createButton) {
 
   createButton.addEventListener(
     "click",
-    function () {
+    async function () {
+
+      if (!firebaseReady) {
+
+        alert(
+          "Firebase is still loading. Please try again."
+        );
+
+        return;
+      }
+
 
       const name =
         $("name")
           .value
           .trim();
 
+
       const password =
         $("pass")
           .value;
 
+
+      const wish =
+        $("wish")
+          .value
+          .trim()
+        ||
+        "Wishing you a very happy birthday! 🎂❤️";
+
+
+      /*
+        VALIDATION
+      */
 
       if (!name) {
 
@@ -426,7 +580,9 @@ if (createButton) {
       }
 
 
-      if (photos.length === 0) {
+      if (
+        selectedFiles.length === 0
+      ) {
 
         alert(
           "Please select at least one photo 📸"
@@ -436,61 +592,143 @@ if (createButton) {
       }
 
 
-      const surpriseData =
-        makeData();
+      /*
+        BUTTON STATE
+      */
 
+      createButton.disabled =
+        true;
 
-      let encoded;
+      createButton.textContent =
+        "Creating surprise... ⏳";
+
 
       try {
 
-        encoded =
-          encodeData(
-            surpriseData
+        /*
+          STEP 1:
+          Create Firestore document first.
+        */
+
+        const surpriseRef =
+          await addDoc(
+            collection(
+              db,
+              "surprises"
+            ),
+            {
+              name:
+                name,
+
+              password:
+                password,
+
+              wish:
+                wish,
+
+              photos:
+                [],
+
+              createdAt:
+                serverTimestamp()
+            }
           );
 
-      } catch (error) {
 
-        console.error(error);
+        const surpriseId =
+          surpriseRef.id;
 
-        alert(
-          "Unable to create link 😭"
+
+        /*
+          STEP 2:
+          Upload photos.
+
+          IMPORTANT:
+          Photos are NOT placed
+          inside the URL.
+        */
+
+        const photoURLs =
+          [];
+
+
+        for (
+          let i = 0;
+          i < selectedFiles.length;
+          i++
+        ) {
+
+          createButton.textContent =
+            `Uploading photo ${i + 1}/${selectedFiles.length}... 📸`;
+
+
+          const url =
+            await uploadPhoto(
+              selectedFiles[i],
+              surpriseId,
+              i
+            );
+
+
+          photoURLs.push(
+            url
+          );
+
+        }
+
+
+        /*
+          STEP 3:
+          Save photo URLs in
+          Firestore.
+        */
+
+        await import(
+          "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+        ).then(
+          async ({
+            updateDoc
+          }) => {
+
+            await updateDoc(
+              doc(
+                db,
+                "surprises",
+                surpriseId
+              ),
+              {
+                photos:
+                  photoURLs
+              }
+            );
+
+          }
         );
 
-        return;
-      }
+
+        /*
+          STEP 4:
+          Create SHORT URL.
+
+          Only Firebase document ID
+          goes into the URL.
+        */
+
+        const baseURL =
+          window.location.href
+            .split("?")[0]
+            .split("#")[0];
 
 
-      /*
-        IMPORTANT FIX
+        const shareLink =
+          `${baseURL}?id=${encodeURIComponent(
+            surpriseId
+          )}`;
 
-        OLD:
-        index.html#DATA
-
-        NEW:
-        index.html?surprise=DATA
-      */
-
-      const baseURL =
-        window.location.href
-          .split("#")[0]
-          .split("?")[0];
-
-
-      const shareLink =
-        baseURL +
-        "?surprise=" +
-        encodeURIComponent(encoded);
-
-
-      if ($("link")) {
 
         $("link").value =
           shareLink;
-      }
 
-
-      if ($("result")) {
 
         $("result")
           .classList
@@ -499,21 +737,56 @@ if (createButton) {
 
         $("result")
           .scrollIntoView({
-            behavior: "smooth",
-            block: "center"
+            behavior:
+              "smooth",
+
+            block:
+              "center"
           });
+
+
+        createButton.textContent =
+          "Surprise Created ❤️";
+
+
+      } catch (error) {
+
+        console.error(
+          "Create surprise error:",
+          error
+        );
+
+
+        alert(
+          "Something went wrong 😭\n\n" +
+          error.message
+        );
+
+
+        createButton.textContent =
+          "Create Surprise 💗";
+
       }
+
+
+      createButton.disabled =
+        false;
 
     }
   );
+
 }
 
 
-/* =====================================================
-   COPY LINK
-===================================================== */
+/*
+=========================================================
+ COPY LINK
+=========================================================
+*/
 
-const copyButton = $("copy");
+const copyButton =
+  $("copy");
+
 
 if (copyButton) {
 
@@ -532,86 +805,175 @@ if (copyButton) {
 
       try {
 
-        if (
-          navigator.clipboard &&
-          window.isSecureContext
-        ) {
-
-          await navigator.clipboard.writeText(
+        await navigator.clipboard
+          .writeText(
             link
           );
 
-          this.textContent =
-            "Copied! ❤️";
+
+        this.textContent =
+          "Copied! ❤️";
 
 
-          setTimeout(() => {
+        setTimeout(
+          () => {
 
             this.textContent =
               "Copy Surprise Link ❤️";
 
-          }, 2000);
+          },
+          2000
+        );
 
-          return;
-        }
 
       } catch (error) {
 
-        console.log(
-          "Clipboard unavailable"
-        );
-      }
+        /*
+          Mobile fallback
+        */
 
+        $("link").focus();
 
-      /*
-        Mobile fallback
-      */
+        $("link").select();
 
-      try {
-
-        const input =
-          $("link");
-
-        input.focus();
-
-        input.select();
-
-        input.setSelectionRange(
+        $("link").setSelectionRange(
           0,
-          input.value.length
+          $("link").value.length
         );
 
-        const success =
-          document.execCommand("copy");
-
-
-        if (success) {
-
-          this.textContent =
-            "Copied! ❤️";
-
-        } else {
-
-          this.textContent =
-            "Select & Copy 📋";
-        }
-
-      } catch (error) {
 
         this.textContent =
           "Long press to copy 📋";
+
       }
 
     }
   );
+
 }
 
 
-/* =====================================================
-   PASSWORD OPEN
-===================================================== */
+/*
+=========================================================
+ GET ID FROM URL
+=========================================================
+*/
 
-const openButton = $("open");
+function getSurpriseId() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  return params.get(
+    "id"
+  );
+
+}
+
+
+const surpriseId =
+  getSurpriseId();
+
+
+/*
+=========================================================
+ LOAD SURPRISE FROM FIRESTORE
+=========================================================
+*/
+
+let surpriseData =
+  null;
+
+
+async function loadSurprise() {
+
+  if (!surpriseId) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const surpriseRef =
+      doc(
+        db,
+        "surprises",
+        surpriseId
+      );
+
+
+    const snapshot =
+      await getDoc(
+        surpriseRef
+      );
+
+
+    if (!snapshot.exists()) {
+
+      alert(
+        "Surprise link not found 😭"
+      );
+
+      return;
+
+    }
+
+
+    surpriseData =
+      snapshot.data();
+
+
+    /*
+      Show lock page
+    */
+
+    $("creator")
+      ?.classList
+      .add("hidden");
+
+
+    $("locked")
+      ?.classList
+      .remove("hidden");
+
+
+    $("lockedName")
+      .textContent =
+      surpriseData.name ||
+      "Someone Special";
+
+
+  } catch (error) {
+
+    console.error(
+      "Load surprise error:",
+      error
+    );
+
+
+    alert(
+      "Unable to load this surprise 😭"
+    );
+
+  }
+
+}
+
+
+/*
+=========================================================
+ PASSWORD OPEN
+=========================================================
+*/
+
+const openButton =
+  $("open");
+
 
 if (openButton) {
 
@@ -619,8 +981,10 @@ if (openButton) {
     "click",
     async function () {
 
-      if (!data) {
+      if (!surpriseData) {
+
         return;
+
       }
 
 
@@ -630,23 +994,30 @@ if (openButton) {
 
       if (
         enteredPassword !==
-        data.password
+        surpriseData.password
       ) {
 
-        $("wrong").textContent =
+        $("wrong")
+          .textContent =
           "Wrong password 😭";
 
-        $("unlock").focus();
+
+        $("unlock")
+          .focus();
+
 
         return;
+
       }
 
 
-      $("wrong").textContent = "";
+      $("wrong")
+        .textContent =
+        "";
 
 
       /*
-        Hide lock screen
+        Hide lock page
       */
 
       $("locked")
@@ -665,83 +1036,101 @@ if (openButton) {
 
       $("sname")
         .textContent =
-        data.name;
+        surpriseData.name ||
+        "You";
 
 
       $("swish")
         .textContent =
-        data.wish;
+        surpriseData.wish ||
+        "";
 
 
       /*
-        Vertical photos
+        Create vertical gallery
       */
 
       createGallery(
-        Array.isArray(data.photos)
-          ? data.photos
+        Array.isArray(
+          surpriseData.photos
+        )
+          ? surpriseData.photos
           : []
       );
 
-
-      /*
-        Confetti
-      */
 
       startConfetti();
 
 
       /*
-        Start music after
-        real user click
+        Password button click is
+        a real user gesture,
+        so music has a better chance
+        of playing on mobile.
       */
 
       await startMusic();
 
     }
   );
+
 }
 
 
-/* =====================================================
-   ENTER KEY
-===================================================== */
+/*
+=========================================================
+ ENTER KEY
+=========================================================
+*/
 
-const unlockInput = $("unlock");
+const unlock =
+  $("unlock");
 
-if (unlockInput) {
 
-  unlockInput.addEventListener(
+if (unlock) {
+
+  unlock.addEventListener(
     "keydown",
     function (event) {
 
-      if (event.key === "Enter") {
+      if (
+        event.key ===
+        "Enter"
+      ) {
 
         event.preventDefault();
 
         $("open").click();
+
       }
 
     }
   );
+
 }
 
 
-/* =====================================================
-   VERTICAL PHOTO GALLERY
-===================================================== */
+/*
+=========================================================
+ VERTICAL GALLERY
+=========================================================
+*/
 
-function createGallery(images) {
+function createGallery(
+  images
+) {
 
   const gallery =
     $("gallery");
+
 
   if (!gallery) {
     return;
   }
 
 
-  gallery.innerHTML = "";
+  gallery.innerHTML =
+    "";
 
 
   const rotations = [
@@ -754,94 +1143,103 @@ function createGallery(images) {
 
 
   images
-    .slice(0, MAX_PHOTOS)
-    .forEach((src, index) => {
+    .slice(
+      0,
+      MAX_PHOTOS
+    )
+    .forEach(
+      function (
+        src,
+        index
+      ) {
 
-      const card =
-        document.createElement("div");
-
-
-      card.className =
-        "photo-card";
-
-
-      card.style.setProperty(
-        "--rotation",
-        rotations[
-          index %
-          rotations.length
-        ]
-      );
+        const card =
+          document.createElement(
+            "div"
+          );
 
 
-      const image =
-        document.createElement("img");
+        card.className =
+          "photo-card";
 
 
-      image.src = src;
-
-      image.alt =
-        `Memory ${index + 1}`;
-
-      image.loading =
-        "lazy";
-
-      image.decoding =
-        "async";
+        card.style.setProperty(
+          "--rotation",
+          rotations[
+            index %
+            rotations.length
+          ]
+        );
 
 
-      card.appendChild(image);
+        const image =
+          document.createElement(
+            "img"
+          );
 
-      gallery.appendChild(card);
 
-    });
+        image.src =
+          src;
+
+
+        image.alt =
+          `Memory ${index + 1}`;
+
+
+        image.loading =
+          "lazy";
+
+
+        image.decoding =
+          "async";
+
+
+        card.appendChild(
+          image
+        );
+
+
+        gallery.appendChild(
+          card
+        );
+
+      }
+    );
+
 }
 
 
-/* =====================================================
-   BACKGROUND MUSIC
-===================================================== */
+/*
+=========================================================
+ MUSIC
+=========================================================
+*/
 
-const music = $("bgMusic");
+const music =
+  $("bgMusic");
+
 
 const musicButton =
   $("musicBtn");
+
 
 const musicStatus =
   $("musicStatus");
 
 
-if (music) {
-
-  music.addEventListener(
-    "error",
-    function () {
-
-      if (musicStatus) {
-
-        musicStatus.textContent =
-          "Music file not found 🎵";
-      }
-
-    }
-  );
-}
-
-
-/* =====================================================
-   START MUSIC
-===================================================== */
-
 async function startMusic() {
 
   if (!music) {
+
     return false;
+
   }
 
 
   try {
 
-    music.volume = 0.65;
+    music.volume =
+      0.65;
 
 
     await music.play();
@@ -851,6 +1249,7 @@ async function startMusic() {
 
       musicButton.textContent =
         "🔊 Music On";
+
     }
 
 
@@ -858,15 +1257,17 @@ async function startMusic() {
 
       musicStatus.textContent =
         "Background music is playing 💗";
+
     }
 
 
     return true;
 
+
   } catch (error) {
 
     console.log(
-      "Music playback blocked:",
+      "Music needs manual tap:",
       error
     );
 
@@ -875,6 +1276,7 @@ async function startMusic() {
 
       musicButton.textContent =
         "🎵 Play Music";
+
     }
 
 
@@ -882,17 +1284,16 @@ async function startMusic() {
 
       musicStatus.textContent =
         "Tap Play Music to start 🎵";
+
     }
 
 
     return false;
+
   }
+
 }
 
-
-/* =====================================================
-   MUSIC BUTTON
-===================================================== */
 
 if (
   musicButton &&
@@ -903,50 +1304,66 @@ if (
     "click",
     async function () {
 
-      try {
+      if (
+        music.paused
+      ) {
 
-        if (music.paused) {
+        await startMusic();
 
-          await startMusic();
+      } else {
 
-        } else {
-
-          music.pause();
-
-          this.textContent =
-            "🎵 Play Music";
+        music.pause();
 
 
-          if (musicStatus) {
-
-            musicStatus.textContent =
-              "Music paused 💗";
-          }
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Music error:",
-          error
-        );
+        this.textContent =
+          "🎵 Play Music";
 
 
         if (musicStatus) {
 
           musicStatus.textContent =
-            "Check the music file 🎵";
+            "Music paused 💗";
+
         }
+
       }
 
     }
   );
+
 }
 
 
-/* =====================================================
-   CONFETTI
-===================================================== */
+/*
+=========================================================
+ MUSIC ERROR
+=========================================================
+*/
+
+if (music) {
+
+  music.addEventListener(
+    "error",
+    function () {
+
+      if (musicStatus) {
+
+        musicStatus.textContent =
+          "Keep music.mp3 beside index.html 🎵";
+
+      }
+
+    }
+  );
+
+}
+
+
+/*
+=========================================================
+ CONFETTI
+=========================================================
+*/
 
 function startConfetti() {
 
@@ -961,10 +1378,16 @@ function startConfetti() {
   ];
 
 
-  for (let i = 0; i < 35; i++) {
+  for (
+    let i = 0;
+    i < 35;
+    i++
+  ) {
 
     const item =
-      document.createElement("span");
+      document.createElement(
+        "span"
+      );
 
 
     item.textContent =
@@ -1009,26 +1432,40 @@ function startConfetti() {
       "transform 3s linear, opacity 3s";
 
 
-    document.body.appendChild(item);
+    document.body.appendChild(
+      item
+    );
 
 
-    requestAnimationFrame(() => {
+    requestAnimationFrame(
+      () => {
 
-      item.style.transform =
-        `translateY(110vh) rotate(${Math.random() * 600}deg)`;
-
-
-      item.style.opacity =
-        "0";
-
-    });
+        item.style.transform =
+          `translateY(110vh) rotate(${
+            Math.random() * 600
+          }deg)`;
 
 
-    setTimeout(() => {
+        item.style.opacity =
+          "0";
 
-      item.remove();
+      }
+    );
 
-    }, 3200);
+
+    setTimeout(
+      () => {
+
+        item.remove();
+
+      },
+      3200
+    );
 
   }
+
 }
+
+
+/*
+=========================
