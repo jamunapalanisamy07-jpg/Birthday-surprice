@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 maximum-scale=1.0, user-scalable=no">
+
+  <title>Special Surprise 💗</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ================= CREATOR ================= -->
+
+  <section id="creator" class="screen">
+
+    <div class="card">
+
+      <div class="heart">💗</div>
+
+      <h1>Create a Special Surprise</h1>
+
+      <p class="intro">
+        Create a beautiful surprise for someone special —
+        friend, partner, sibling, parent, or anyone you love. ✨
+      </p>
+
+      <label>Recipient's Name</label>
+
+      <input
+        id="name"
+        type="text"
+        placeholder="e.g. Anu"
+        autocomplete="off"
+      >
+
+      <label>Create a Secret Password 🔐</label>
+
+      <input
+        id="pass"
+        type="password"
+        placeholder="Enter a password"
+        autocomplete="new-password"
+      >
+
+      <label>Your Special Message 💌</label>
+
+      <textarea
+        id="wish"
+        placeholder="Write something special..."
+      ></textarea>
+
+      <label>Photos — maximum 15 📸</label>
+
+      <input
+        id="files"
+        type="file"
+        accept="image/*"
+        multiple
+      >
+
+      <div id="photoCount">
+        0 / 15 photos selected
+      </div>
+
+      <div id="thumbs"></div>
+
+      <button id="create">
+        Create Surprise Link ✨
+      </button>
+
+      <div id="result" class="result hidden">
+
+        <h3>Your surprise is ready! 💗</h3>
+
+        <input
+          id="link"
+          type="text"
+          readonly
+        >
+
+        <button id="copy">
+          Copy Link 🔗
+        </button>
+
+        <p>
+          Send this link to the special person.
+          Send the password separately. 🔐
+        </p>
+
+      </div>
+
+      <div class="note">
+        💡 This is a cute password lock, not high-security encryption.
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ================= LOCK SCREEN ================= -->
+
+  <section id="locked" class="screen hidden">
+
+    <div class="card lock-card">
+
+      <div class="big-lock">🔐</div>
+
+      <h1>
+        A Special Surprise For
+      </h1>
+
+      <h2 id="lockedName"></h2>
+
+      <p class="intro">
+        Enter the secret password to open your surprise 💗
+      </p>
+
+      <input
+        id="unlock"
+        type="password"
+        placeholder="Enter password"
+        autocomplete="off"
+      >
+
+      <button id="open">
+        Unlock Surprise 💗
+      </button>
+
+      <div id="wrong"></div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ================= SURPRISE ================= -->
+
+  <section id="surprise" class="hidden">
+
+    <div class="hero">
+
+      <div class="sparkles">
+        ✨ 💗 ✨ 🎈 ✨ 💗 ✨
+      </div>
+
+      <h1>
+        Happy Special Day,
+        <span id="sname"></span>! 🥳
+      </h1>
+
+      <p id="swish"></p>
+
+      <button id="musicBtn" class="music-button">
+        🎵 Play Music
+      </button>
+
+    </div>
+
+
+    <div class="gallery-title">
+      💕 Beautiful Memories 💕
+    </div>
+
+    <div id="gallery" class="gallery"></div>
+
+
+    <div class="letter">
+      💌
+
+      <p>
+        Made specially for you ❤️
+      </p>
+    </div>
+
+
+    <!-- MUSIC -->
+
+    <audio
+      id="bgMusic"
+      loop
+      preload="auto"
+      playsinline
+    >
+      <source
+        src="music.mp3.mpeg"
+        type="audio/mpeg"
+      >
+    </audio>
+
+  </section>
+
+
+  <script src="script.js"></script>
+
+</body>
+</html>
