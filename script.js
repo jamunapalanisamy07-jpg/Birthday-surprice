@@ -987,7 +987,7 @@ if (music) {
       if (musicStatus) {
 
         musicStatus.textContent =
-          "Please keep music.mp3 beside index.html 🎵";
+          "Please keep music.mp3.mpeg beside index.html 🎵";
 
       }
 
