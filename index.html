@@ -5,332 +5,316 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
-
-  <meta
-    name="theme-color"
-    content="#d946ef"
+    content="width=device-width, initial-scale=1.0"
   >
 
   <title>Special Surprise 💗</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
 
 <body>
 
-  <!-- =========================
-       BACKGROUND
-  ========================== -->
+  <!-- =========================================
+       CREATE PAGE
+  ========================================== -->
 
-  <div class="background-glow glow-one"></div>
-  <div class="background-glow glow-two"></div>
-  <div class="background-glow glow-three"></div>
+  <main
+    id="creator"
+    class="page"
+  >
 
+    <div class="heart">💗</div>
 
-  <!-- =========================
-       MAIN CONTAINER
-  ========================== -->
+    <h1>
+      Create a Special Surprise
+    </h1>
 
-  <main class="app">
-
-
-    <!-- =========================
-         CREATOR PAGE
-    ========================== -->
-
-    <section id="creator" class="card">
-
-      <div class="heart-logo">
-        💗
-      </div>
-
-      <h1>
-        Create a Special Surprise
-      </h1>
-
-      <p class="subtitle">
-        Create a beautiful surprise for someone special.
-        Friend, partner, sibling, parent, or anyone you love. ✨
-      </p>
+    <p class="intro">
+      Create a beautiful surprise for someone special.
+      Friend, partner, sibling, parent, or anyone you love. ✨
+    </p>
 
 
-      <!-- NAME -->
+    <!-- NAME -->
 
-      <label for="name">
-        Recipient's Name
-      </label>
+    <label for="name">
+      Recipient's Name
+    </label>
 
-      <input
-        id="name"
-        type="text"
-        placeholder="e.g. Anu"
-        autocomplete="off"
-      >
-
-
-      <!-- PASSWORD -->
-
-      <label for="pass">
-        Create a Secret Password 🔐
-      </label>
-
-      <input
-        id="pass"
-        type="password"
-        placeholder="Enter a password"
-        autocomplete="new-password"
-      >
-
-
-      <!-- MESSAGE -->
-
-      <label for="wish">
-        Your Special Message 💌
-      </label>
-
-      <textarea
-        id="wish"
-        rows="5"
-        placeholder="Write something special..."
-      ></textarea>
-
-
-      <!-- PHOTOS -->
-
-      <label for="files">
-        Photos
-        <span class="small-label">
-          — maximum 15
-        </span>
-      </label>
-
-      <input
-        id="files"
-        type="file"
-        accept="image/*"
-        multiple
-      >
-
-      <div id="photoCount" class="photo-count">
-        0 / 15 photos selected
-      </div>
-
-      <div id="thumbs" class="thumbs"></div>
-
-
-      <!-- MUSIC INFO -->
-
-      <div class="music-info">
-
-        <span class="music-icon">
-          🎵
-        </span>
-
-        <div>
-          <strong>
-            Background Music
-          </strong>
-
-          <p>
-            Keep <b>music.mp3</b> beside index.html
-          </p>
-        </div>
-
-      </div>
-
-
-      <!-- CREATE -->
-
-      <button
-        id="create"
-        class="main-button"
-        type="button"
-      >
-        Create Surprise Link ✨
-      </button>
-
-
-      <!-- RESULT -->
-
-      <div
-        id="result"
-        class="result hidden"
-      >
-
-        <h2>
-          Your surprise is ready! 💗
-        </h2>
-
-        <input
-          id="link"
-          type="text"
-          readonly
-        >
-
-        <button
-          id="copy"
-          class="main-button"
-          type="button"
-        >
-          Copy Surprise Link ❤️
-        </button>
-
-        <p class="share-note">
-          Send this link to your special person.
-        </p>
-
-      </div>
-
-
-      <p class="note">
-        💡 This is a cute password lock,
-        not high-security encryption.
-      </p>
-
-    </section>
-
-
-
-    <!-- =========================
-         PASSWORD SCREEN
-    ========================== -->
-
-    <section
-      id="locked"
-      class="card locked-card hidden"
+    <input
+      id="name"
+      type="text"
+      placeholder="e.g. Anu"
+      autocomplete="off"
     >
 
-      <div class="lock-icon">
-        🔐
+
+    <!-- PASSWORD -->
+
+    <label for="pass">
+      Create a Secret Password 🔐
+    </label>
+
+    <input
+      id="pass"
+      type="password"
+      placeholder="Enter a password"
+      autocomplete="new-password"
+    >
+
+
+    <!-- MESSAGE -->
+
+    <label for="wish">
+      Your Special Message 💌
+    </label>
+
+    <textarea
+      id="wish"
+      placeholder="Write something special..."
+    ></textarea>
+
+
+    <!-- PHOTOS -->
+
+    <label for="files">
+      Photos
+      <span class="small">
+        — maximum 15
+      </span>
+    </label>
+
+    <input
+      id="files"
+      type="file"
+      accept="image/*"
+      multiple
+    >
+
+    <p
+      id="photoCount"
+      class="photo-count"
+    >
+      0 / 15 photos selected
+    </p>
+
+    <div
+      id="thumbs"
+      class="thumbs"
+    ></div>
+
+
+    <!-- MUSIC INFO -->
+
+    <div class="music-info">
+
+      <div class="music-icon">
+        🎵
       </div>
 
-      <h1>
-        A Special Surprise 💗
-      </h1>
+      <div>
+        <strong>
+          Background Music
+        </strong>
+
+        <small>
+          Keep <b>music.mp3</b> beside index.html
+        </small>
+      </div>
+
+    </div>
+
+
+    <!-- CREATE -->
+
+    <button
+      id="create"
+      class="main-button"
+      type="button"
+    >
+      Create Surprise 💗
+    </button>
+
+
+    <!-- RESULT -->
+
+    <section
+      id="result"
+      class="result hidden"
+    >
+
+      <h2>
+        Your Surprise Link 💌
+      </h2>
 
       <p>
-        This surprise is specially made for
+        Copy this link and send it to them.
       </p>
 
-      <h2 id="lockedName">
-        Someone Special
-      </h2>
-
       <input
-        id="unlock"
-        type="password"
-        placeholder="Enter secret password"
-        autocomplete="off"
+        id="link"
+        type="text"
+        readonly
       >
 
       <button
-        id="open"
+        id="copy"
         class="main-button"
         type="button"
       >
-        Open Surprise 💝
+        Copy Surprise Link ❤️
       </button>
-
-      <p
-        id="wrong"
-        class="wrong"
-      ></p>
-
-    </section>
-
-
-
-    <!-- =========================
-         SURPRISE PAGE
-    ========================== -->
-
-    <section
-      id="surprise"
-      class="card surprise-card hidden"
-    >
-
-      <div class="celebrate">
-        🎉 💗 ✨
-      </div>
-
-      <h1>
-        Happy Birthday
-      </h1>
-
-      <h2 id="sname">
-        Someone Special
-      </h2>
-
-      <p
-        id="swish"
-        class="wish"
-      ></p>
-
-
-      <!-- MUSIC -->
-
-      <div class="music-player">
-
-        <!--
-          IMPORTANT:
-          music.mp3 must be beside index.html
-        -->
-
-        <audio
-          id="bgMusic"
-          loop
-          preload="auto"
-          playsinline
-        >
-          <source
-            src="./music.mp3.mpeg"
-            type="audio/mpeg"
-          >
-
-          Your browser does not support audio.
-        </audio>
-
-        <button
-          id="musicBtn"
-          class="music-button"
-          type="button"
-        >
-          🎵 Play Music
-        </button>
-
-        <p id="musicStatus">
-          Tap the button to play background music 💗
-        </p>
-
-      </div>
-
-
-      <!-- =========================
-           VERTICAL PHOTO GALLERY
-      ========================== -->
-
-      <h2 class="gallery-title">
-        Our Beautiful Memories 📸
-      </h2>
-
-      <div
-        id="gallery"
-        class="gallery"
-      ></div>
-
-
-      <div class="bottom-message">
-        Made with love 💗
-      </div>
 
     </section>
 
   </main>
 
 
-  <script src="script.js"></script>
+  <!-- =========================================
+       PASSWORD PAGE
+  ========================================== -->
+
+  <main
+    id="locked"
+    class="page hidden"
+  >
+
+    <div class="lock-icon">
+      🔐
+    </div>
+
+    <h1>
+      A Special Surprise 💗
+    </h1>
+
+    <p>
+      This surprise is specially made for
+    </p>
+
+    <h2 id="lockedName">
+      Someone Special
+    </h2>
+
+    <label for="unlock">
+      Enter Secret Password
+    </label>
+
+    <input
+      id="unlock"
+      type="password"
+      placeholder="Enter password"
+      autocomplete="off"
+    >
+
+    <button
+      id="open"
+      class="main-button"
+      type="button"
+    >
+      Open Surprise 💖
+    </button>
+
+    <p
+      id="wrong"
+      class="wrong"
+    ></p>
+
+  </main>
+
+
+  <!-- =========================================
+       SURPRISE PAGE
+  ========================================== -->
+
+  <main
+    id="surprise"
+    class="surprise hidden"
+  >
+
+    <div class="surprise-header">
+
+      <div class="big-heart">
+        💕
+      </div>
+
+      <h1>
+        Happy Birthday,
+        <span id="sname">
+          You
+        </span>! 🎂
+      </h1>
+
+      <p id="swish"></p>
+
+    </div>
+
+
+    <!-- MUSIC -->
+
+    <div class="music-box">
+
+      <button
+        id="musicBtn"
+        type="button"
+      >
+        🎵 Play Music
+      </button>
+
+      <p id="musicStatus">
+        Tap the button if music doesn't start.
+      </p>
+
+    </div>
+
+
+    <!-- VERTICAL GALLERY -->
+
+    <section
+      id="gallery"
+      class="gallery"
+    ></section>
+
+
+    <div class="ending">
+      Made with ❤️ just for you
+    </div>
+
+  </main>
+
+
+  <!-- =========================================
+       AUDIO
+  ========================================== -->
+
+  <audio
+    id="bgMusic"
+    loop
+    preload="auto"
+    playsinline
+  >
+
+    <source
+      src="./music.mp3"
+      type="audio/mpeg"
+    >
+
+    Your browser does not support audio.
+
+  </audio>
+
+
+  <!-- =========================================
+       SCRIPT
+  ========================================== -->
+
+  <script
+    type="module"
+    src="script.js"
+  ></script>
 
 </body>
 </html>
