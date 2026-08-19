@@ -1,6 +1,5 @@
 "use strict";
 
-
 /* =====================================================
    HELPER
 ===================================================== */
@@ -25,8 +24,7 @@ function encodeData(data) {
 
   const json = JSON.stringify(data);
 
-  const bytes =
-    new TextEncoder().encode(json);
+  const bytes = new TextEncoder().encode(json);
 
   let binary = "";
 
@@ -45,35 +43,28 @@ function decodeData(encoded) {
 
   try {
 
-    let base64 =
-      encoded
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
+    let base64 = encoded
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
 
     while (base64.length % 4) {
       base64 += "=";
     }
 
-    const binary =
-      atob(base64);
+    const binary = atob(base64);
 
-    const bytes =
-      Uint8Array.from(
-        binary,
-        char => char.charCodeAt(0)
-      );
+    const bytes = Uint8Array.from(
+      binary,
+      char => char.charCodeAt(0)
+    );
 
-    const json =
-      new TextDecoder().decode(bytes);
+    const json = new TextDecoder().decode(bytes);
 
     return JSON.parse(json);
 
   } catch (error) {
 
-    console.error(
-      "Decode error:",
-      error
-    );
+    console.error("Decode error:", error);
 
     return null;
   }
@@ -82,170 +73,93 @@ function decodeData(encoded) {
 
 /* =====================================================
    IMAGE COMPRESSION
-   IMPORTANT FOR MOBILE
 ===================================================== */
 
 function compressImage(file) {
 
-  return new Promise(
-    (resolve, reject) => {
+  return new Promise((resolve, reject) => {
 
-      const reader =
-        new FileReader();
+    const reader = new FileReader();
 
+    reader.onload = () => {
 
-      reader.onload = () => {
+      const img = new Image();
 
-        const img =
-          new Image();
+      img.onload = () => {
 
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
 
-        img.onload = () => {
+        const MAX_SIZE = 280;
 
-          let width =
-            img.naturalWidth;
+        if (Math.max(width, height) > MAX_SIZE) {
 
-          let height =
-            img.naturalHeight;
+          if (width > height) {
 
+            height = Math.round(
+              height * MAX_SIZE / width
+            );
 
-          /*
-            Smaller image = shorter share link.
-            This is important for mobile browsers.
-          */
+            width = MAX_SIZE;
 
-          const MAX_SIZE = 280;
+          } else {
 
+            width = Math.round(
+              width * MAX_SIZE / height
+            );
 
-          if (
-            Math.max(width, height)
-            > MAX_SIZE
-          ) {
-
-            if (width > height) {
-
-              height =
-                Math.round(
-                  height *
-                  MAX_SIZE /
-                  width
-                );
-
-              width =
-                MAX_SIZE;
-
-            } else {
-
-              width =
-                Math.round(
-                  width *
-                  MAX_SIZE /
-                  height
-                );
-
-              height =
-                MAX_SIZE;
-            }
+            height = MAX_SIZE;
           }
+        }
 
+        const canvas = document.createElement("canvas");
 
-          const canvas =
-            document.createElement(
-              "canvas"
-            );
+        canvas.width = width;
+        canvas.height = height;
 
+        const ctx = canvas.getContext("2d", {
+          alpha: false
+        });
 
-          canvas.width =
-            width;
-
-          canvas.height =
-            height;
-
-
-          const ctx =
-            canvas.getContext(
-              "2d",
-              {
-                alpha: false
-              }
-            );
-
-
-          ctx.drawImage(
-            img,
-            0,
-            0,
-            width,
-            height
-          );
-
-
-          /*
-            WebP is smaller than JPEG
-            on most modern browsers.
-          */
-
-          let result =
-            canvas.toDataURL(
-              "image/webp",
-              0.28
-            );
-
-
-          /*
-            Fallback if WebP isn't supported.
-          */
-
-          if (
-            !result.startsWith(
-              "data:image/webp"
-            )
-          ) {
-
-            result =
-              canvas.toDataURL(
-                "image/jpeg",
-                0.32
-              );
-          }
-
-
-          resolve(result);
-
-        };
-
-
-        img.onerror = () => {
-
-          reject(
-            new Error(
-              "Unable to read image"
-            )
-          );
-
-        };
-
-
-        img.src =
-          reader.result;
-      };
-
-
-      reader.onerror = () => {
-
-        reject(
-          new Error(
-            "Unable to read file"
-          )
+        ctx.drawImage(
+          img,
+          0,
+          0,
+          width,
+          height
         );
 
+        let result = canvas.toDataURL(
+          "image/webp",
+          0.28
+        );
+
+        if (!result.startsWith("data:image/webp")) {
+
+          result = canvas.toDataURL(
+            "image/jpeg",
+            0.32
+          );
+        }
+
+        resolve(result);
+
       };
 
+      img.onerror = () => {
+        reject(new Error("Unable to read image"));
+      };
 
-      reader.readAsDataURL(file);
+      img.src = reader.result;
+    };
 
-    }
-  );
+    reader.onerror = () => {
+      reject(new Error("Unable to read file"));
+    };
+
+    reader.readAsDataURL(file);
+
+  });
 }
 
 
@@ -253,9 +167,7 @@ function compressImage(file) {
    PHOTO SELECT
 ===================================================== */
 
-const fileInput =
-  $("files");
-
+const fileInput = $("files");
 
 if (fileInput) {
 
@@ -265,75 +177,47 @@ if (fileInput) {
 
       photos = [];
 
-      $("thumbs").innerHTML =
-        "";
+      if ($("thumbs")) {
+        $("thumbs").innerHTML = "";
+      }
 
-      $("photoCount")
-        .textContent =
-        "Processing photos... 📸";
+      if ($("photoCount")) {
+        $("photoCount").textContent =
+          "Processing photos... 📸";
+      }
 
+      const files = Array.from(this.files)
+        .slice(0, MAX_PHOTOS);
 
-      const files =
-        Array.from(
-          this.files
-        ).slice(
-          0,
-          MAX_PHOTOS
-        );
-
-
-      if (
-        this.files.length >
-        MAX_PHOTOS
-      ) {
+      if (this.files.length > MAX_PHOTOS) {
 
         alert(
           "Maximum 15 photos only 📸"
         );
       }
 
+      for (let i = 0; i < files.length; i++) {
 
-      for (
-        let i = 0;
-        i < files.length;
-        i++
-      ) {
+        const file = files[i];
 
-        const file =
-          files[i];
-
-
-        if (
-          !file.type.startsWith(
-            "image/"
-          )
-        ) {
-
+        if (!file.type.startsWith("image/")) {
           continue;
         }
-
 
         try {
 
           const compressed =
-            await compressImage(
-              file
-            );
+            await compressImage(file);
 
+          photos.push(compressed);
 
-          photos.push(
-            compressed
-          );
+          addThumbnail(compressed);
 
+          if ($("photoCount")) {
 
-          addThumbnail(
-            compressed
-          );
-
-
-          $("photoCount")
-            .textContent =
-            `${photos.length} / ${MAX_PHOTOS} photos selected`;
+            $("photoCount").textContent =
+              `${photos.length} / ${MAX_PHOTOS} photos selected`;
+          }
 
         } catch (error) {
 
@@ -341,17 +225,16 @@ if (fileInput) {
             "Photo error:",
             error
           );
-
         }
       }
 
-
-      if (photos.length === 0) {
-
+      if (
+        photos.length === 0 &&
         $("photoCount")
-          .textContent =
-          "0 / 15 photos selected";
+      ) {
 
+        $("photoCount").textContent =
+          "0 / 15 photos selected";
       }
 
     }
@@ -365,24 +248,17 @@ if (fileInput) {
 
 function addThumbnail(src) {
 
-  const img =
-    document.createElement(
-      "img"
-    );
+  const img = document.createElement("img");
 
+  img.src = src;
 
-  img.src =
-    src;
+  img.alt = "Selected photo";
 
-  img.alt =
-    "Selected photo";
+  img.loading = "lazy";
 
-  img.loading =
-    "lazy";
-
-
-  $("thumbs")
-    .appendChild(img);
+  if ($("thumbs")) {
+    $("thumbs").appendChild(img);
+  }
 }
 
 
@@ -395,31 +271,20 @@ function makeData() {
   return {
 
     name:
-      $("name")
-        .value
-        .trim()
+      $("name").value.trim()
       ||
       "Birthday Star",
 
-
     password:
-      $("pass")
-        .value,
-
+      $("pass").value,
 
     wish:
-      $("wish")
-        .value
-        .trim()
+      $("wish").value.trim()
       ||
       "Wishing you a very happy birthday! 🎂❤️",
 
-
     photos:
-      photos.slice(
-        0,
-        MAX_PHOTOS
-      )
+      photos.slice(0, MAX_PHOTOS)
 
   };
 }
@@ -427,26 +292,62 @@ function makeData() {
 
 /* =====================================================
    LOAD SHARE DATA
+   NEW:
+   ?surprise=DATA
+
+   ALSO SUPPORTS OLD:
+   #DATA
 ===================================================== */
 
 function loadData() {
 
-  const hash =
-    location.hash.substring(1);
+  try {
+
+    const params = new URLSearchParams(
+      window.location.search
+    );
+
+    /*
+      New mobile-safe format
+    */
+
+    const queryData =
+      params.get("surprise");
+
+    if (queryData) {
+
+      return decodeData(queryData);
+    }
 
 
-  if (!hash) {
+    /*
+      Old hash format
+    */
+
+    const hash =
+      window.location.hash.substring(1);
+
+    if (hash) {
+
+      return decodeData(hash);
+    }
+
+
+    return null;
+
+  } catch (error) {
+
+    console.error(
+      "Loading data failed:",
+      error
+    );
 
     return null;
   }
-
-
-  return decodeData(hash);
 }
 
 
-const data =
-  loadData();
+const data = loadData();
 
 
 /* =====================================================
@@ -455,20 +356,27 @@ const data =
 
 if (data) {
 
-  $("creator")
-    .classList
-    .add("hidden");
+  if ($("creator")) {
 
+    $("creator")
+      .classList
+      .add("hidden");
+  }
 
-  $("locked")
-    .classList
-    .remove("hidden");
+  if ($("locked")) {
 
+    $("locked")
+      .classList
+      .remove("hidden");
+  }
 
-  $("lockedName")
-    .textContent =
-    data.name ||
-    "Someone Special";
+  if ($("lockedName")) {
+
+    $("lockedName")
+      .textContent =
+      data.name ||
+      "Someone Special";
+  }
 }
 
 
@@ -476,9 +384,7 @@ if (data) {
    CREATE SHARE LINK
 ===================================================== */
 
-const createButton =
-  $("create");
-
+const createButton = $("create");
 
 if (createButton) {
 
@@ -490,7 +396,6 @@ if (createButton) {
         $("name")
           .value
           .trim();
-
 
       const password =
         $("pass")
@@ -531,25 +436,11 @@ if (createButton) {
       }
 
 
-      if (
-        photos.length >
-        MAX_PHOTOS
-      ) {
-
-        alert(
-          "Maximum 15 photos only 📸"
-        );
-
-        return;
-      }
-
-
       const surpriseData =
         makeData();
 
 
       let encoded;
-
 
       try {
 
@@ -560,6 +451,8 @@ if (createButton) {
 
       } catch (error) {
 
+        console.error(error);
+
         alert(
           "Unable to create link 😭"
         );
@@ -568,35 +461,48 @@ if (createButton) {
       }
 
 
+      /*
+        IMPORTANT FIX
+
+        OLD:
+        index.html#DATA
+
+        NEW:
+        index.html?surprise=DATA
+      */
+
       const baseURL =
-        location.href
-          .split("#")[0];
+        window.location.href
+          .split("#")[0]
+          .split("?")[0];
 
 
       const shareLink =
         baseURL +
-        "#" +
-        encoded;
+        "?surprise=" +
+        encodeURIComponent(encoded);
 
 
-      /*
-        Show generated link.
-      */
+      if ($("link")) {
 
-      $("link").value =
-        shareLink;
-
-
-      $("result")
-        .classList
-        .remove("hidden");
+        $("link").value =
+          shareLink;
+      }
 
 
-      $("result")
-        .scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
+      if ($("result")) {
+
+        $("result")
+          .classList
+          .remove("hidden");
+
+
+        $("result")
+          .scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+      }
 
     }
   );
@@ -607,9 +513,7 @@ if (createButton) {
    COPY LINK
 ===================================================== */
 
-const copyButton =
-  $("copy");
-
+const copyButton = $("copy");
 
 if (copyButton) {
 
@@ -622,14 +526,9 @@ if (copyButton) {
 
 
       if (!link) {
-
         return;
       }
 
-
-      /*
-        Modern clipboard
-      */
 
       try {
 
@@ -638,25 +537,20 @@ if (copyButton) {
           window.isSecureContext
         ) {
 
-          await navigator
-            .clipboard
-            .writeText(link);
-
+          await navigator.clipboard.writeText(
+            link
+          );
 
           this.textContent =
             "Copied! ❤️";
 
 
-          setTimeout(
-            () => {
+          setTimeout(() => {
 
-              this.textContent =
-                "Copy Surprise Link ❤️";
+            this.textContent =
+              "Copy Surprise Link ❤️";
 
-            },
-            2000
-          );
-
+          }, 2000);
 
           return;
         }
@@ -664,9 +558,8 @@ if (copyButton) {
       } catch (error) {
 
         console.log(
-          "Clipboard API unavailable"
+          "Clipboard unavailable"
         );
-
       }
 
 
@@ -679,7 +572,6 @@ if (copyButton) {
         const input =
           $("link");
 
-
         input.focus();
 
         input.select();
@@ -689,11 +581,8 @@ if (copyButton) {
           input.value.length
         );
 
-
         const success =
-          document.execCommand(
-            "copy"
-          );
+          document.execCommand("copy");
 
 
         if (success) {
@@ -705,14 +594,12 @@ if (copyButton) {
 
           this.textContent =
             "Select & Copy 📋";
-
         }
 
       } catch (error) {
 
         this.textContent =
           "Long press to copy 📋";
-
       }
 
     }
@@ -724,9 +611,7 @@ if (copyButton) {
    PASSWORD OPEN
 ===================================================== */
 
-const openButton =
-  $("open");
-
+const openButton = $("open");
 
 if (openButton) {
 
@@ -735,14 +620,12 @@ if (openButton) {
     async function () {
 
       if (!data) {
-
         return;
       }
 
 
       const enteredPassword =
-        $("unlock")
-          .value;
+        $("unlock").value;
 
 
       if (
@@ -750,26 +633,20 @@ if (openButton) {
         data.password
       ) {
 
-        $("wrong")
-          .textContent =
+        $("wrong").textContent =
           "Wrong password 😭";
 
-
-        $("unlock")
-          .focus();
-
+        $("unlock").focus();
 
         return;
       }
 
 
-      $("wrong")
-        .textContent =
-        "";
+      $("wrong").textContent = "";
 
 
       /*
-        Hide lock page
+        Hide lock screen
       */
 
       $("locked")
@@ -797,36 +674,29 @@ if (openButton) {
 
 
       /*
-        Create vertical gallery
+        Vertical photos
       */
 
       createGallery(
-        Array.isArray(
-          data.photos
-        )
+        Array.isArray(data.photos)
           ? data.photos
           : []
       );
 
 
       /*
-        CONFETTI
+        Confetti
       */
 
       startConfetti();
 
 
       /*
-        IMPORTANT:
-        The password button click is
-        a real user gesture.
-
-        So mobile browsers are more
-        likely to allow audio here.
+        Start music after
+        real user click
       */
 
       await startMusic();
-
 
     }
   );
@@ -834,12 +704,10 @@ if (openButton) {
 
 
 /* =====================================================
-   ENTER KEY FOR PASSWORD
+   ENTER KEY
 ===================================================== */
 
-const unlockInput =
-  $("unlock");
-
+const unlockInput = $("unlock");
 
 if (unlockInput) {
 
@@ -847,15 +715,11 @@ if (unlockInput) {
     "keydown",
     function (event) {
 
-      if (
-        event.key ===
-        "Enter"
-      ) {
+      if (event.key === "Enter") {
 
         event.preventDefault();
 
         $("open").click();
-
       }
 
     }
@@ -864,19 +728,20 @@ if (unlockInput) {
 
 
 /* =====================================================
-   VERTICAL POLAROID GALLERY
+   VERTICAL PHOTO GALLERY
 ===================================================== */
 
-function createGallery(
-  images
-) {
+function createGallery(images) {
 
   const gallery =
     $("gallery");
 
+  if (!gallery) {
+    return;
+  }
 
-  gallery.innerHTML =
-    "";
+
+  gallery.innerHTML = "";
 
 
   const rotations = [
@@ -889,66 +754,47 @@ function createGallery(
 
 
   images
-    .slice(
-      0,
-      MAX_PHOTOS
-    )
-    .forEach(
-      (src, index) => {
+    .slice(0, MAX_PHOTOS)
+    .forEach((src, index) => {
 
-        const card =
-          document.createElement(
-            "div"
-          );
+      const card =
+        document.createElement("div");
 
 
-        card.className =
-          "photo-card";
+      card.className =
+        "photo-card";
 
 
-        card.style.setProperty(
-          "--rotation",
-          rotations[
-            index %
-            rotations.length
-          ]
-        );
+      card.style.setProperty(
+        "--rotation",
+        rotations[
+          index %
+          rotations.length
+        ]
+      );
 
 
-        const image =
-          document.createElement(
-            "img"
-          );
+      const image =
+        document.createElement("img");
 
 
-        image.src =
-          src;
+      image.src = src;
+
+      image.alt =
+        `Memory ${index + 1}`;
+
+      image.loading =
+        "lazy";
+
+      image.decoding =
+        "async";
 
 
-        image.alt =
-          `Memory ${index + 1}`;
+      card.appendChild(image);
 
+      gallery.appendChild(card);
 
-        image.loading =
-          "lazy";
-
-
-        image.decoding =
-          "async";
-
-
-        card.appendChild(
-          image
-        );
-
-
-        gallery.appendChild(
-          card
-        );
-
-      }
-    );
-
+    });
 }
 
 
@@ -956,26 +802,13 @@ function createGallery(
    BACKGROUND MUSIC
 ===================================================== */
 
-const music =
-  $("bgMusic");
-
+const music = $("bgMusic");
 
 const musicButton =
   $("musicBtn");
 
-
 const musicStatus =
   $("musicStatus");
-
-
-/*
-  IMPORTANT:
-  We do NOT show "music file missing"
-  popup automatically.
-
-  The browser checks the actual
-  music.mp3 file.
-*/
 
 
 if (music) {
@@ -987,13 +820,11 @@ if (music) {
       if (musicStatus) {
 
         musicStatus.textContent =
-          "Please keep music.mp3.mpeg beside index.html 🎵";
-
+          "Music file not found 🎵";
       }
 
     }
   );
-
 }
 
 
@@ -1004,15 +835,13 @@ if (music) {
 async function startMusic() {
 
   if (!music) {
-
     return false;
   }
 
 
   try {
 
-    music.volume =
-      0.65;
+    music.volume = 0.65;
 
 
     await music.play();
@@ -1022,7 +851,6 @@ async function startMusic() {
 
       musicButton.textContent =
         "🔊 Music On";
-
     }
 
 
@@ -1030,7 +858,6 @@ async function startMusic() {
 
       musicStatus.textContent =
         "Background music is playing 💗";
-
     }
 
 
@@ -1038,13 +865,8 @@ async function startMusic() {
 
   } catch (error) {
 
-    /*
-      Mobile browser may block
-      playback until another tap.
-    */
-
     console.log(
-      "Autoplay blocked:",
+      "Music playback blocked:",
       error
     );
 
@@ -1053,7 +875,6 @@ async function startMusic() {
 
       musicButton.textContent =
         "🎵 Play Music";
-
     }
 
 
@@ -1061,13 +882,11 @@ async function startMusic() {
 
       musicStatus.textContent =
         "Tap Play Music to start 🎵";
-
     }
 
 
     return false;
   }
-
 }
 
 
@@ -1086,16 +905,13 @@ if (
 
       try {
 
-        if (
-          music.paused
-        ) {
+        if (music.paused) {
 
           await startMusic();
 
         } else {
 
           music.pause();
-
 
           this.textContent =
             "🎵 Play Music";
@@ -1105,9 +921,7 @@ if (
 
             musicStatus.textContent =
               "Music paused 💗";
-
           }
-
         }
 
       } catch (error) {
@@ -1117,13 +931,12 @@ if (
           error
         );
 
+
         if (musicStatus) {
 
           musicStatus.textContent =
-            "Check that music.mp3 is uploaded 🎵";
-
+            "Check the music file 🎵";
         }
-
       }
 
     }
@@ -1148,16 +961,10 @@ function startConfetti() {
   ];
 
 
-  for (
-    let i = 0;
-    i < 35;
-    i++
-  ) {
+  for (let i = 0; i < 35; i++) {
 
     const item =
-      document.createElement(
-        "span"
-      );
+      document.createElement("span");
 
 
     item.textContent =
@@ -1202,36 +1009,26 @@ function startConfetti() {
       "transform 3s linear, opacity 3s";
 
 
-    document.body
-      .appendChild(
-        item
-      );
+    document.body.appendChild(item);
 
 
-    requestAnimationFrame(
-      () => {
+    requestAnimationFrame(() => {
 
-        item.style.transform =
-          `translateY(110vh)
-           rotate(${Math.random() * 600}deg)`;
+      item.style.transform =
+        `translateY(110vh) rotate(${Math.random() * 600}deg)`;
 
 
-        item.style.opacity =
-          "0";
+      item.style.opacity =
+        "0";
 
-      }
-    );
+    });
 
 
-    setTimeout(
-      () => {
+    setTimeout(() => {
 
-        item.remove();
+      item.remove();
 
-      },
-      3200
-    );
+    }, 3200);
 
   }
-
 }
