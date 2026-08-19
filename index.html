@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    content="width=device-width, initial-scale=1.0"
   >
 
   <title>Birthday Surprise 💗</title>
 
   <link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
+
   <!-- =========================
-       CREATE SCREEN
+       CREATE SURPRISE
   ========================== -->
 
   <section id="creator" class="screen">
@@ -28,10 +33,13 @@
       <h1>Create Your Surprise</h1>
 
       <p class="muted">
-        Create a cute private surprise for anyone 💗
+        Create a beautiful surprise for anyone 💗
       </p>
 
-      <label for="name">Name</label>
+
+      <label for="name">
+        Name
+      </label>
 
       <input
         id="name"
@@ -41,7 +49,9 @@
       >
 
 
-      <label for="pass">Password</label>
+      <label for="pass">
+        Password
+      </label>
 
       <input
         id="pass"
@@ -51,18 +61,24 @@
       >
 
 
-      <label for="wish">Birthday Wish</label>
+      <label for="wish">
+        Birthday Wish
+      </label>
 
       <textarea
         id="wish"
-        placeholder="Write your message..."
         rows="4"
+        placeholder="Write your birthday wish..."
       ></textarea>
 
 
       <label for="files">
-        Photos <span class="small">(Maximum 15)</span>
+        Photos
+        <span class="small">
+          (Maximum 15)
+        </span>
       </label>
+
 
       <input
         id="files"
@@ -71,21 +87,34 @@
         multiple
       >
 
+
       <p class="photo-info">
         📸 Select up to 15 photos
       </p>
 
+
       <div id="thumbs"></div>
 
 
-      <button id="create" type="button">
+      <button
+        id="create"
+        type="button"
+      >
         Create Surprise Link ✨
       </button>
 
 
-      <div id="result" class="result hidden">
+      <!-- SHARE LINK -->
 
-        <h3>🎉 Your link is ready!</h3>
+      <div
+        id="result"
+        class="result hidden"
+      >
+
+        <h3>
+          🎉 Your surprise link is ready!
+        </h3>
+
 
         <input
           id="link"
@@ -93,20 +122,25 @@
           readonly
         >
 
-        <button id="copy" type="button">
+
+        <button
+          id="copy"
+          type="button"
+        >
           Copy Link 🔗
         </button>
 
+
         <p class="small">
-          Send this link to the person.
-          Send the password separately. 🔐
+          Send the link to the person.
+          Send the password separately 🔐
         </p>
 
       </div>
 
 
       <p class="tiny">
-        This is a cute password lock, not high-security encryption.
+        Cute password protection for your surprise 💗
       </p>
 
     </div>
@@ -119,19 +153,27 @@
        PASSWORD SCREEN
   ========================== -->
 
-  <section id="locked" class="screen hidden">
+  <section
+    id="locked"
+    class="screen hidden"
+  >
 
     <div class="box lock-box">
 
-      <div class="lockemoji">🔐</div>
+      <div class="lockemoji">
+        🔐
+      </div>
+
 
       <h1>
         A Surprise For
         <span id="lockedName"></span>
       </h1>
 
+
       <p class="muted">
-        Enter the secret password to open your surprise 💗
+        Enter the secret password
+        to unlock your surprise 💗
       </p>
 
 
@@ -143,7 +185,10 @@
       >
 
 
-      <button id="open" type="button">
+      <button
+        id="open"
+        type="button"
+      >
         Unlock 💗
       </button>
 
@@ -157,23 +202,33 @@
 
 
   <!-- =========================
-       SURPRISE SCREEN
+       SURPRISE
   ========================== -->
 
-  <section id="surprise" class="hidden">
+  <section
+    id="surprise"
+    class="hidden"
+  >
+
 
     <div class="hero">
+
 
       <div class="sparkles">
         ✨ 🎈 ✨ 🎂 ✨ 💗 ✨ 🎈 ✨
       </div>
+
 
       <h1>
         Happy Birthday,
         <span id="sname"></span>! 🥳
       </h1>
 
+
       <p id="swish"></p>
+
+
+      <!-- MUSIC BUTTON -->
 
       <button
         id="musicBtn"
@@ -183,21 +238,39 @@
         🎵 Play Music
       </button>
 
+
     </div>
 
 
-    <!-- Background music -->
+
+    <!-- =========================
+         BACKGROUND MUSIC
+    ========================== -->
+
     <audio
       id="bgMusic"
-      src="music.mp3"
-      loop
+      src="./music.mp3"
       preload="auto"
+      loop
+      playsinline
     ></audio>
 
 
-    <!-- Vertical photos -->
-    <div id="gallery" class="gallery"></div>
 
+    <!-- =========================
+         15 VERTICAL PHOTOS
+    ========================== -->
+
+    <div
+      id="gallery"
+      class="gallery"
+    ></div>
+
+
+
+    <!-- =========================
+         FINAL MESSAGE
+    ========================== -->
 
     <div class="letter">
 
@@ -211,11 +284,16 @@
 
     </div>
 
+
   </section>
 
 
 
-  <script src="script.js"></script>
+  <!-- SCRIPT -->
+
+  <script src="./script.js"></script>
+
 
 </body>
+
 </html>
