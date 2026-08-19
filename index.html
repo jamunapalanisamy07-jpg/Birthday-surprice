@@ -2,58 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0,
-                 maximum-scale=1.0, user-scalable=no">
 
-  <title>Special Surprise 💗</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  >
+
+  <title>Birthday Surprise 💗</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- ================= CREATOR ================= -->
+  <!-- =========================
+       CREATE SCREEN
+  ========================== -->
 
   <section id="creator" class="screen">
 
-    <div class="card">
+    <div class="box">
 
-      <div class="heart">💗</div>
+      <div class="cake">🎂</div>
 
-      <h1>Create a Special Surprise</h1>
+      <h1>Create Your Surprise</h1>
 
-      <p class="intro">
-        Create a beautiful surprise for someone special —
-        friend, partner, sibling, parent, or anyone you love. ✨
+      <p class="muted">
+        Create a cute private surprise for anyone 💗
       </p>
 
-      <label>Recipient's Name</label>
+      <label for="name">Name</label>
 
       <input
         id="name"
         type="text"
-        placeholder="e.g. Anu"
+        placeholder="Enter name"
         autocomplete="off"
       >
 
-      <label>Create a Secret Password 🔐</label>
+
+      <label for="pass">Password</label>
 
       <input
         id="pass"
         type="password"
-        placeholder="Enter a password"
+        placeholder="Create password"
         autocomplete="new-password"
       >
 
-      <label>Your Special Message 💌</label>
+
+      <label for="wish">Birthday Wish</label>
 
       <textarea
         id="wish"
-        placeholder="Write something special..."
+        placeholder="Write your message..."
+        rows="4"
       ></textarea>
 
-      <label>Photos — maximum 15 📸</label>
+
+      <label for="files">
+        Photos <span class="small">(Maximum 15)</span>
+      </label>
 
       <input
         id="files"
@@ -62,19 +71,21 @@
         multiple
       >
 
-      <div id="photoCount">
-        0 / 15 photos selected
-      </div>
+      <p class="photo-info">
+        📸 Select up to 15 photos
+      </p>
 
       <div id="thumbs"></div>
 
-      <button id="create">
+
+      <button id="create" type="button">
         Create Surprise Link ✨
       </button>
 
+
       <div id="result" class="result hidden">
 
-        <h3>Your surprise is ready! 💗</h3>
+        <h3>🎉 Your link is ready!</h3>
 
         <input
           id="link"
@@ -82,43 +93,47 @@
           readonly
         >
 
-        <button id="copy">
+        <button id="copy" type="button">
           Copy Link 🔗
         </button>
 
-        <p>
-          Send this link to the special person.
+        <p class="small">
+          Send this link to the person.
           Send the password separately. 🔐
         </p>
 
       </div>
 
-      <div class="note">
-        💡 This is a cute password lock, not high-security encryption.
-      </div>
+
+      <p class="tiny">
+        This is a cute password lock, not high-security encryption.
+      </p>
 
     </div>
 
   </section>
 
 
-  <!-- ================= LOCK SCREEN ================= -->
+
+  <!-- =========================
+       PASSWORD SCREEN
+  ========================== -->
 
   <section id="locked" class="screen hidden">
 
-    <div class="card lock-card">
+    <div class="box lock-box">
 
-      <div class="big-lock">🔐</div>
+      <div class="lockemoji">🔐</div>
 
       <h1>
-        A Special Surprise For
+        A Surprise For
+        <span id="lockedName"></span>
       </h1>
 
-      <h2 id="lockedName"></h2>
-
-      <p class="intro">
+      <p class="muted">
         Enter the secret password to open your surprise 💗
       </p>
+
 
       <input
         id="unlock"
@@ -127,9 +142,11 @@
         autocomplete="off"
       >
 
-      <button id="open">
-        Unlock Surprise 💗
+
+      <button id="open" type="button">
+        Unlock 💗
       </button>
+
 
       <div id="wrong"></div>
 
@@ -138,61 +155,64 @@
   </section>
 
 
-  <!-- ================= SURPRISE ================= -->
+
+  <!-- =========================
+       SURPRISE SCREEN
+  ========================== -->
 
   <section id="surprise" class="hidden">
 
     <div class="hero">
 
       <div class="sparkles">
-        ✨ 💗 ✨ 🎈 ✨ 💗 ✨
+        ✨ 🎈 ✨ 🎂 ✨ 💗 ✨ 🎈 ✨
       </div>
 
       <h1>
-        Happy Special Day,
+        Happy Birthday,
         <span id="sname"></span>! 🥳
       </h1>
 
       <p id="swish"></p>
 
-      <button id="musicBtn" class="music-button">
+      <button
+        id="musicBtn"
+        type="button"
+        class="music-button"
+      >
         🎵 Play Music
       </button>
 
     </div>
 
 
-    <div class="gallery-title">
-      💕 Beautiful Memories 💕
-    </div>
+    <!-- Background music -->
+    <audio
+      id="bgMusic"
+      src="music.mp3"
+      loop
+      preload="auto"
+    ></audio>
 
+
+    <!-- Vertical photos -->
     <div id="gallery" class="gallery"></div>
 
 
     <div class="letter">
+
       💌
 
-      <p>
+      <br>
+
+      <span>
         Made specially for you ❤️
-      </p>
+      </span>
+
     </div>
 
-
-    <!-- MUSIC -->
-
-    <audio
-      id="bgMusic"
-      loop
-      preload="auto"
-      playsinline
-    >
-      <source
-        src="music.mp3.mpeg"
-        type="audio/mpeg"
-      >
-    </audio>
-
   </section>
+
 
 
   <script src="script.js"></script>
