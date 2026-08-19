@@ -18,228 +18,268 @@ body {
   min-height: 100vh;
 
   font-family:
+    "Trebuchet MS",
     Arial,
-    Helvetica,
     sans-serif;
 
-  color: #4a245f;
-
-  background:
-    radial-gradient(
-      circle at top left,
-      #ffd6ef 0%,
-      transparent 35%
-    ),
-
-    radial-gradient(
-      circle at bottom right,
-      #d9c2ff 0%,
-      transparent 40%
-    ),
-
-    linear-gradient(
-      135deg,
-      #ffe6f5,
-      #eee0ff,
-      #fbd9ee
-    );
+  color: #63366f;
 
   overflow-x: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffb6e6 0%,
+      #e7b8ff 35%,
+      #b99aff 70%,
+      #9a70ff 100%
+    );
 }
 
 
 /* =========================
-   COMMON
+   DREAMY BACKGROUND
 ========================= */
 
-.hidden {
-  display: none !important;
+.background-glow {
+  position: fixed;
+
+  width: 300px;
+  height: 300px;
+
+  border-radius: 50%;
+
+  filter: blur(70px);
+
+  opacity: 0.45;
+
+  pointer-events: none;
+
+  z-index: -1;
 }
 
 
-.screen {
-  min-height: 100vh;
+.glow-one {
+  background: #ff5fc7;
 
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  padding: 25px 15px;
+  top: -100px;
+  left: -100px;
 }
 
 
-.box {
+.glow-two {
+  background: #a970ff;
+
+  right: -100px;
+  top: 35%;
+}
+
+
+.glow-three {
+  background: #ff9de2;
+
+  bottom: -100px;
+  left: 30%;
+}
+
+
+/* =========================
+   APP
+========================= */
+
+.app {
   width: 100%;
-  max-width: 560px;
 
-  background: rgba(255, 255, 255, 0.88);
+  max-width: 900px;
 
-  backdrop-filter: blur(15px);
+  margin: 0 auto;
 
-  border-radius: 28px;
+  padding:
+    30px 18px
+    60px;
+}
 
-  padding: 30px 25px;
+
+/* =========================
+   CARD
+========================= */
+
+.card {
+  width: 100%;
+
+  padding:
+    40px 35px;
+
+  border-radius: 30px;
+
+  background:
+    rgba(255, 255, 255, 0.42);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.65);
 
   box-shadow:
-    0 20px 60px rgba(110, 50, 130, 0.22);
+    0 25px 70px
+    rgba(88, 38, 130, 0.18);
 
-  border: 1px solid rgba(255,255,255,0.8);
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
 }
 
 
-.cake {
+/* =========================
+   LOGO
+========================= */
+
+.heart-logo {
   text-align: center;
 
-  font-size: 60px;
+  font-size: 70px;
 
-  margin-bottom: 5px;
+  margin-bottom: 15px;
+
+  filter:
+    drop-shadow(
+      0 8px 15px
+      rgba(255, 0, 130, 0.25)
+    );
 }
 
+
+/* =========================
+   HEADINGS
+========================= */
 
 h1 {
   text-align: center;
 
-  color: #9b3f9f;
+  font-size: 34px;
 
-  margin-bottom: 12px;
+  color: #753c82;
 
-  font-size: 30px;
+  margin-bottom: 18px;
 }
 
 
-.muted {
+h2 {
+  color: #7b3e86;
+}
+
+
+.subtitle {
+  max-width: 650px;
+
+  margin: 0 auto 35px;
+
   text-align: center;
 
-  color: #806b85;
+  line-height: 1.9;
 
-  line-height: 1.6;
+  font-size: 16px;
 
-  margin-bottom: 22px;
+  color: #744f78;
 }
 
+
+/* =========================
+   FORM
+========================= */
 
 label {
   display: block;
 
+  margin:
+    20px 5px 9px;
+
   font-weight: bold;
-
-  margin: 15px 0 7px;
-
-  color: #713b78;
-}
-
-
-input,
-textarea {
-  width: 100%;
-
-  border: 2px solid #ead4ed;
-
-  border-radius: 14px;
-
-  padding: 13px;
 
   font-size: 16px;
 
-  outline: none;
-
-  background: #fffaff;
-
-  color: #4b2750;
+  color: #683a72;
 }
 
 
-input:focus,
-textarea:focus {
-  border-color: #c478d0;
+.small-label {
+  font-weight: normal;
 
-  box-shadow:
-    0 0 0 4px rgba(196,120,208,0.12);
+  font-size: 13px;
+
+  opacity: 0.7;
+}
+
+
+input[type="text"],
+input[type="password"],
+textarea,
+input[type="file"] {
+  width: 100%;
+
+  border: none;
+
+  outline: none;
+
+  border-radius: 18px;
+
+  background:
+    rgba(255, 255, 255, 0.82);
+
+  color: #4d3153;
+
+  font-size: 16px;
+}
+
+
+input[type="text"],
+input[type="password"] {
+  height: 58px;
+
+  padding:
+    0 18px;
 }
 
 
 textarea {
   resize: vertical;
 
-  min-height: 110px;
+  min-height: 130px;
+
+  padding: 17px;
+
+  line-height: 1.6;
 }
 
 
 input[type="file"] {
-  padding: 10px;
-
-  background: white;
+  padding: 12px;
 
   cursor: pointer;
 }
 
 
-button {
-  width: 100%;
-
-  border: none;
-
-  border-radius: 15px;
-
-  padding: 14px;
-
-  margin-top: 18px;
-
-  font-size: 16px;
-
-  font-weight: bold;
-
-  color: white;
-
-  background:
-    linear-gradient(
-      135deg,
-      #d45bb8,
-      #8b68d9
-    );
-
-  cursor: pointer;
-
+input:focus,
+textarea:focus {
   box-shadow:
-    0 8px 20px rgba(150, 70, 170, 0.25);
-
-  transition: transform 0.2s ease;
+    0 0 0 3px
+    rgba(220, 74, 221, 0.18);
 }
 
 
-button:active {
-  transform: scale(0.97);
-}
+/* =========================
+   PHOTO COUNT
+========================= */
 
-
-.small {
-  font-size: 13px;
-
-  color: #927895;
-}
-
-
-.tiny {
+.photo-count {
   text-align: center;
 
-  font-size: 11px;
+  margin-top: 10px;
 
-  color: #a18da3;
+  font-size: 14px;
 
-  margin-top: 20px;
-
-  line-height: 1.5;
-}
-
-
-.photo-info {
-  font-size: 13px;
-
-  color: #927895;
-
-  margin-top: 7px;
+  color: #805a84;
 }
 
 
@@ -247,31 +287,142 @@ button:active {
    THUMBNAILS
 ========================= */
 
-#thumbs {
+.thumbs {
   display: grid;
 
   grid-template-columns:
-    repeat(4, 1fr);
+    repeat(5, 1fr);
 
   gap: 8px;
 
-  margin-top: 12px;
+  margin-top: 15px;
 }
 
 
-#thumbs img {
+.thumbs img {
   width: 100%;
 
-  height: 75px;
+  aspect-ratio: 1 / 1;
 
   object-fit: cover;
 
-  border-radius: 10px;
+  border-radius: 12px;
 
-  border: 2px solid white;
+  border:
+    3px solid
+    white;
 
   box-shadow:
-    0 3px 10px rgba(80,30,90,0.15);
+    0 5px 15px
+    rgba(70, 20, 90, 0.15);
+}
+
+
+/* =========================
+   MUSIC INFO
+========================= */
+
+.music-info {
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  margin:
+    25px 0;
+
+  padding: 16px;
+
+  border-radius: 18px;
+
+  background:
+    rgba(255,255,255,0.38);
+}
+
+
+.music-icon {
+  font-size: 30px;
+}
+
+
+.music-info strong {
+  display: block;
+
+  color: #683a72;
+}
+
+
+.music-info p {
+  margin-top: 4px;
+
+  font-size: 13px;
+
+  opacity: 0.75;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+
+button {
+  border: none;
+
+  outline: none;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color:
+    transparent;
+}
+
+
+.main-button {
+  width: 100%;
+
+  min-height: 58px;
+
+  margin-top: 18px;
+
+  border-radius: 30px;
+
+  color: white;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff249c,
+      #b842ff
+    );
+
+  box-shadow:
+    0 12px 25px
+    rgba(222, 38, 178, 0.25);
+
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+
+.main-button:hover {
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 16px 30px
+    rgba(222, 38, 178, 0.32);
+}
+
+
+.main-button:active {
+  transform:
+    scale(0.98);
 }
 
 
@@ -280,146 +431,198 @@ button:active {
 ========================= */
 
 .result {
-  margin-top: 22px;
+  margin-top: 30px;
 
-  padding: 18px;
+  padding: 25px;
+
+  border-radius: 25px;
+
+  background:
+    rgba(255,255,255,0.28);
+
+  text-align: center;
+}
+
+
+.result h2 {
+  margin-bottom: 18px;
+}
+
+
+#link {
+  width: 100%;
+
+  height: 58px;
+
+  padding: 0 15px;
+
+  border: none;
+
+  outline: none;
 
   border-radius: 18px;
 
   background:
-    linear-gradient(
-      135deg,
-      #fff0fa,
-      #f3eaff
-    );
+    rgba(255,255,255,0.85);
+
+  color: #68416d;
+
+  font-size: 13px;
 }
 
 
-.result h3 {
+.share-note {
+  margin-top: 18px;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================
+   LOCKED PAGE
+========================= */
+
+.locked-card {
   text-align: center;
 
-  color: #9b3f9f;
+  max-width: 600px;
 
-  margin-bottom: 12px;
+  margin:
+    60px auto;
 }
 
 
-.result input {
-  margin-top: 5px;
+.lock-icon {
+  font-size: 70px;
 
-  font-size: 12px;
+  margin-bottom: 20px;
 }
 
 
-.result button {
+.locked-card p {
+  margin: 10px 0;
+
+  line-height: 1.7;
+}
+
+
+#lockedName {
+  margin-bottom: 25px;
+}
+
+
+#unlock {
   margin-top: 10px;
 }
 
 
 /* =========================
-   LOCK SCREEN
+   WRONG PASSWORD
 ========================= */
 
-.lock-box {
-  text-align: center;
-}
+.wrong {
+  min-height: 25px;
 
-
-.lockemoji {
-  font-size: 65px;
-
-  margin-bottom: 8px;
-}
-
-
-#lockedName {
-  color: #c14fb1;
-}
-
-
-#wrong {
-  min-height: 24px;
-
-  margin-top: 12px;
-
-  color: #d33b62;
+  color: #e32e72;
 
   font-weight: bold;
 }
 
 
 /* =========================
-   SURPRISE HERO
+   SURPRISE
 ========================= */
 
-#surprise {
-  min-height: 100vh;
-
-  padding-bottom: 50px;
+.surprise-card {
+  text-align: center;
 }
 
 
-.hero {
-  width: 100%;
+.celebrate {
+  font-size: 35px;
 
-  padding:
-    55px 18px
-    35px;
+  margin-bottom: 10px;
+}
 
-  text-align: center;
+
+.surprise-card h1 {
+  margin-bottom: 5px;
+}
+
+
+#sname {
+  font-size: 30px;
+
+  margin-bottom: 20px;
+}
+
+
+.wish {
+  max-width: 700px;
+
+  margin:
+    0 auto 25px;
+
+  font-size: 18px;
+
+  line-height: 1.9;
+
+  white-space: pre-wrap;
+}
+
+
+/* =========================
+   MUSIC PLAYER
+========================= */
+
+.music-player {
+  margin:
+    20px auto 35px;
+
+  padding: 18px;
+
+  max-width: 500px;
+
+  border-radius: 25px;
 
   background:
-    linear-gradient(
-      135deg,
-      rgba(255,220,244,0.9),
-      rgba(220,203,255,0.9)
-    );
-
-  box-shadow:
-    0 10px 35px rgba(90,50,110,0.12);
-}
-
-
-.hero h1 {
-  font-size: 34px;
-
-  margin-top: 15px;
-}
-
-
-.hero p {
-  max-width: 650px;
-
-  margin: 10px auto;
-
-  line-height: 1.7;
-
-  color: #684b70;
-
-  font-size: 17px;
-}
-
-
-.sparkles {
-  font-size: 20px;
-
-  letter-spacing: 5px;
+    rgba(255,255,255,0.35);
 }
 
 
 .music-button {
-  width: auto;
+  min-width: 210px;
 
-  min-width: 160px;
-
-  margin-top: 18px;
+  min-height: 50px;
 
   padding:
-    11px 22px;
+    10px 25px;
 
-  border-radius: 30px;
+  border-radius: 28px;
 
-  font-size: 14px;
+  color: white;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff329e,
+      #9f4cff
+    );
+}
+
+
+#musicStatus {
+  margin-top: 10px;
+
+  font-size: 13px;
+
+  opacity: 0.75;
 }
 
 
@@ -427,15 +630,18 @@ button:active {
    VERTICAL GALLERY
 ========================= */
 
+.gallery-title {
+  margin:
+    30px 0;
+
+  text-align: center;
+
+  font-size: 25px;
+}
+
+
 .gallery {
   width: 100%;
-
-  max-width: 680px;
-
-  margin: 30px auto;
-
-  padding:
-    10px 16px;
 
   display: flex;
 
@@ -443,42 +649,48 @@ button:active {
 
   align-items: center;
 
-  gap: 30px;
+  gap: 35px;
+
+  padding:
+    10px 0 40px;
 }
 
 
-/* Polaroid */
+/* =========================
+   POLAROID
+========================= */
 
 .photo-card {
-  width: 100%;
+  width: min(100%, 520px);
 
-  max-width: 600px;
+  padding:
+    12px 12px 45px;
 
   background: white;
 
-  padding:
-    10px
-    10px
-    42px;
-
-  border-radius: 5px;
+  border-radius: 3px;
 
   box-shadow:
-    0 15px 35px
-    rgba(70, 30, 90, 0.22);
+    0 18px 35px
+    rgba(60, 20, 80, 0.24);
 
   transform:
     rotate(var(--rotation));
 
   transition:
-    transform 0.25s ease;
+    transform 0.3s,
+    box-shadow 0.3s;
 }
 
 
 .photo-card:hover {
   transform:
     rotate(0deg)
-    scale(1.015);
+    scale(1.02);
+
+  box-shadow:
+    0 25px 45px
+    rgba(60, 20, 80, 0.3);
 }
 
 
@@ -487,52 +699,39 @@ button:active {
 
   width: 100%;
 
-  height: auto;
+  /*
+    Portrait / vertical look
+  */
 
-  max-height: 750px;
+  aspect-ratio: 4 / 5;
 
-  object-fit: contain;
+  object-fit: cover;
 
-  border-radius: 3px;
+  background: #eee;
 }
 
 
 /* =========================
-   LETTER
+   BOTTOM
 ========================= */
 
-.letter {
-  width: calc(100% - 30px);
+.bottom-message {
+  padding-top: 20px;
 
-  max-width: 600px;
+  font-size: 17px;
 
-  margin:
-    30px auto;
+  font-weight: bold;
 
-  padding: 30px;
-
-  text-align: center;
-
-  background: rgba(255,255,255,0.85);
-
-  border-radius: 22px;
-
-  box-shadow:
-    0 10px 30px
-    rgba(80,30,100,0.15);
-
-  font-size: 30px;
+  color: #743d80;
 }
 
 
-.letter span {
-  display: inline-block;
+/* =========================
+   UTILITY
+========================= */
 
-  margin-top: 10px;
-
-  font-size: 16px;
-
-  color: #8a638d;
+.hidden {
+  display: none !important;
 }
 
 
@@ -542,131 +741,118 @@ button:active {
 
 @media (max-width: 600px) {
 
-  .screen {
-    padding: 15px 10px;
-  }
-
-
-  .box {
+  .app {
     padding:
-      25px 17px;
-
-    border-radius: 22px;
+      15px 10px
+      35px;
   }
 
 
-  .cake {
-    font-size: 52px;
+  .card {
+    padding:
+      28px 18px;
+
+    border-radius: 24px;
+  }
+
+
+  .heart-logo {
+    font-size: 55px;
   }
 
 
   h1 {
-    font-size: 25px;
-  }
-
-
-  .muted {
-    font-size: 14px;
-  }
-
-
-  #thumbs {
-    grid-template-columns:
-      repeat(3, 1fr);
-
-    gap: 7px;
-  }
-
-
-  #thumbs img {
-    height: 70px;
-  }
-
-
-  .hero {
-    padding:
-      42px 14px
-      28px;
-  }
-
-
-  .hero h1 {
     font-size: 27px;
   }
 
 
-  .hero p {
+  .subtitle {
+    font-size: 14px;
+
+    line-height: 1.8;
+
+    margin-bottom: 25px;
+  }
+
+
+  label {
     font-size: 15px;
   }
 
 
-  .sparkles {
-    font-size: 16px;
+  input[type="text"],
+  input[type="password"] {
+    height: 55px;
 
-    letter-spacing: 2px;
+    font-size: 16px;
   }
 
 
-  .gallery {
-    width: 100%;
+  textarea {
+    font-size: 16px;
+  }
 
-    padding:
-      8px 12px;
 
-    gap: 25px;
+  .thumbs {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+
+  .music-info {
+    align-items: flex-start;
   }
 
 
   .photo-card {
-    width: 100%;
-
-    max-width: 100%;
+    width: 94%;
 
     padding:
-      7px
-      7px
-      32px;
+      9px 9px 35px;
   }
 
 
   .photo-card img {
-    width: 100%;
-
-    max-height: none;
-  }
-
-
-  .letter {
-    padding: 25px 15px;
-  }
-}
-
-
-/* =========================
-   VERY SMALL PHONES
-========================= */
-
-@media (max-width: 360px) {
-
-  .box {
-    padding:
-      22px 13px;
-  }
-
-
-  h1 {
-    font-size: 23px;
-  }
-
-
-  .hero h1 {
-    font-size: 24px;
+    aspect-ratio: 4 / 5;
   }
 
 
   .gallery {
+    gap: 28px;
+  }
+
+
+  #sname {
+    font-size: 25px;
+  }
+
+
+  .wish {
+    font-size: 16px;
+  }
+
+}
+
+
+/* =========================
+   VERY SMALL MOBILE
+========================= */
+
+@media (max-width: 380px) {
+
+  .card {
     padding:
-      5px 8px;
+      24px 14px;
+  }
+
+
+  .photo-card {
+    width: 96%;
+  }
+
+
+  .main-button {
+    font-size: 15px;
   }
 
 }
