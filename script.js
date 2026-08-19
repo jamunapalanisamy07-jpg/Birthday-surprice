@@ -1,24 +1,25 @@
 "use strict";
 
-/* =========================
+
+/* =====================================================
    HELPER
-========================= */
+===================================================== */
 
 const $ = (id) => document.getElementById(id);
 
 
-/* =========================
-   GLOBAL PHOTO ARRAY
-========================= */
-
-let photos = [];
+/* =====================================================
+   SETTINGS
+===================================================== */
 
 const MAX_PHOTOS = 15;
 
+let photos = [];
 
-/* =========================
-   ENCODE
-========================= */
+
+/* =====================================================
+   BASE64 ENCODE / DECODE
+===================================================== */
 
 function encodeData(data) {
 
@@ -33,160 +34,224 @@ function encodeData(data) {
     binary += String.fromCharCode(byte);
   }
 
-  return btoa(binary);
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
-
-/* =========================
-   DECODE
-========================= */
 
 function decodeData(encoded) {
 
-  const binary =
-    atob(encoded);
+  try {
 
-  const bytes =
-    Uint8Array.from(
-      binary,
-      char => char.charCodeAt(0)
+    let base64 =
+      encoded
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    while (base64.length % 4) {
+      base64 += "=";
+    }
+
+    const binary =
+      atob(base64);
+
+    const bytes =
+      Uint8Array.from(
+        binary,
+        char => char.charCodeAt(0)
+      );
+
+    const json =
+      new TextDecoder().decode(bytes);
+
+    return JSON.parse(json);
+
+  } catch (error) {
+
+    console.error(
+      "Decode error:",
+      error
     );
 
-  const json =
-    new TextDecoder().decode(bytes);
-
-  return JSON.parse(json);
+    return null;
+  }
 }
 
 
-/* =========================
-   IMAGE RESIZE
-========================= */
+/* =====================================================
+   IMAGE COMPRESSION
+   IMPORTANT FOR MOBILE
+===================================================== */
 
-function resizeImage(file) {
+function compressImage(file) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const reader =
-      new FileReader();
-
-
-    reader.onload = function () {
-
-      const img =
-        new Image();
+      const reader =
+        new FileReader();
 
 
-      img.onload = function () {
+      reader.onload = () => {
 
-        let width =
-          img.naturalWidth;
-
-        let height =
-          img.naturalHeight;
+        const img =
+          new Image();
 
 
-        const maxSize = 650;
+        img.onload = () => {
+
+          let width =
+            img.naturalWidth;
+
+          let height =
+            img.naturalHeight;
 
 
-        if (
-          Math.max(width, height)
-          > maxSize
-        ) {
+          /*
+            Smaller image = shorter share link.
+            This is important for mobile browsers.
+          */
 
-          if (width > height) {
+          const MAX_SIZE = 280;
 
-            height =
-              Math.round(
-                height *
-                maxSize /
-                width
-              );
 
-            width = maxSize;
+          if (
+            Math.max(width, height)
+            > MAX_SIZE
+          ) {
 
-          } else {
+            if (width > height) {
 
-            width =
-              Math.round(
-                width *
-                maxSize /
-                height
-              );
+              height =
+                Math.round(
+                  height *
+                  MAX_SIZE /
+                  width
+                );
 
-            height = maxSize;
+              width =
+                MAX_SIZE;
+
+            } else {
+
+              width =
+                Math.round(
+                  width *
+                  MAX_SIZE /
+                  height
+                );
+
+              height =
+                MAX_SIZE;
+            }
           }
-        }
 
 
-        const canvas =
-          document.createElement(
-            "canvas"
+          const canvas =
+            document.createElement(
+              "canvas"
+            );
+
+
+          canvas.width =
+            width;
+
+          canvas.height =
+            height;
+
+
+          const ctx =
+            canvas.getContext(
+              "2d",
+              {
+                alpha: false
+              }
+            );
+
+
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            width,
+            height
           );
 
 
-        canvas.width = width;
+          /*
+            WebP is smaller than JPEG
+            on most modern browsers.
+          */
 
-        canvas.height = height;
+          let result =
+            canvas.toDataURL(
+              "image/webp",
+              0.28
+            );
 
 
-        const ctx =
-          canvas.getContext(
-            "2d"
+          /*
+            Fallback if WebP isn't supported.
+          */
+
+          if (
+            !result.startsWith(
+              "data:image/webp"
+            )
+          ) {
+
+            result =
+              canvas.toDataURL(
+                "image/jpeg",
+                0.32
+              );
+          }
+
+
+          resolve(result);
+
+        };
+
+
+        img.onerror = () => {
+
+          reject(
+            new Error(
+              "Unable to read image"
+            )
           );
 
-
-        ctx.drawImage(
-          img,
-          0,
-          0,
-          width,
-          height
-        );
+        };
 
 
-        resolve(
-          canvas.toDataURL(
-            "image/jpeg",
-            0.55
-          )
-        );
-
+        img.src =
+          reader.result;
       };
 
 
-      img.onerror = function () {
+      reader.onerror = () => {
+
         reject(
           new Error(
-            "Could not load image"
+            "Unable to read file"
           )
         );
+
       };
 
 
-      img.src =
-        reader.result;
-    };
+      reader.readAsDataURL(file);
 
-
-    reader.onerror = function () {
-      reject(
-        new Error(
-          "Could not read file"
-        )
-      );
-    };
-
-
-    reader.readAsDataURL(file);
-
-  });
+    }
+  );
 }
 
 
-/* =========================
+/* =====================================================
    PHOTO SELECT
-========================= */
+===================================================== */
 
 const fileInput =
   $("files");
@@ -198,25 +263,29 @@ if (fileInput) {
     "change",
     async function () {
 
-      const selected =
-        Array.from(
-          this.files
-        ).slice(0, MAX_PHOTOS);
-
-
       photos = [];
 
+      $("thumbs").innerHTML =
+        "";
 
-      const thumbs =
-        $("thumbs");
-
-
-      if (thumbs) {
-        thumbs.innerHTML = "";
-      }
+      $("photoCount")
+        .textContent =
+        "Processing photos... 📸";
 
 
-      if (this.files.length > MAX_PHOTOS) {
+      const files =
+        Array.from(
+          this.files
+        ).slice(
+          0,
+          MAX_PHOTOS
+        );
+
+
+      if (
+        this.files.length >
+        MAX_PHOTOS
+      ) {
 
         alert(
           "Maximum 15 photos only 📸"
@@ -225,87 +294,126 @@ if (fileInput) {
 
 
       for (
-        const file of selected
+        let i = 0;
+        i < files.length;
+        i++
       ) {
+
+        const file =
+          files[i];
+
 
         if (
           !file.type.startsWith(
             "image/"
           )
         ) {
+
           continue;
         }
 
 
         try {
 
-          const image =
-            await resizeImage(
+          const compressed =
+            await compressImage(
               file
             );
 
 
           photos.push(
-            image
+            compressed
           );
 
 
-          const thumb =
-            document.createElement(
-              "img"
-            );
-
-
-          thumb.src = image;
-
-          thumb.alt =
-            "Selected photo";
-
-
-          thumbs.appendChild(
-            thumb
+          addThumbnail(
+            compressed
           );
 
+
+          $("photoCount")
+            .textContent =
+            `${photos.length} / ${MAX_PHOTOS} photos selected`;
 
         } catch (error) {
 
           console.error(
+            "Photo error:",
             error
           );
 
-          alert(
-            "One photo could not be loaded."
-          );
         }
+      }
+
+
+      if (photos.length === 0) {
+
+        $("photoCount")
+          .textContent =
+          "0 / 15 photos selected";
 
       }
 
     }
   );
-
 }
 
 
-/* =========================
+/* =====================================================
+   THUMBNAIL
+===================================================== */
+
+function addThumbnail(src) {
+
+  const img =
+    document.createElement(
+      "img"
+    );
+
+
+  img.src =
+    src;
+
+  img.alt =
+    "Selected photo";
+
+  img.loading =
+    "lazy";
+
+
+  $("thumbs")
+    .appendChild(img);
+}
+
+
+/* =====================================================
    CREATE DATA
-========================= */
+===================================================== */
 
 function makeData() {
 
   return {
 
     name:
-      $("name").value.trim()
+      $("name")
+        .value
+        .trim()
       ||
       "Birthday Star",
 
+
     password:
-      $("pass").value,
+      $("pass")
+        .value,
+
 
     wish:
-      $("wish").value.trim()
+      $("wish")
+        .value
+        .trim()
       ||
       "Wishing you a very happy birthday! 🎂❤️",
+
 
     photos:
       photos.slice(
@@ -317,37 +425,23 @@ function makeData() {
 }
 
 
-/* =========================
-   LOAD DATA FROM URL
-========================= */
+/* =====================================================
+   LOAD SHARE DATA
+===================================================== */
 
 function loadData() {
 
-  try {
-
-    const hash =
-      location.hash.substring(1);
+  const hash =
+    location.hash.substring(1);
 
 
-    if (!hash) {
-      return null;
-    }
-
-
-    return decodeData(
-      hash
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Invalid surprise link:",
-      error
-    );
+  if (!hash) {
 
     return null;
   }
+
+
+  return decodeData(hash);
 }
 
 
@@ -355,9 +449,9 @@ const data =
   loadData();
 
 
-/* =========================
-   INITIAL SCREEN
-========================= */
+/* =====================================================
+   SHOW CORRECT PAGE
+===================================================== */
 
 if (data) {
 
@@ -373,14 +467,14 @@ if (data) {
 
   $("lockedName")
     .textContent =
-    data.name;
-
+    data.name ||
+    "Someone Special";
 }
 
 
-/* =========================
-   CREATE LINK
-========================= */
+/* =====================================================
+   CREATE SHARE LINK
+===================================================== */
 
 const createButton =
   $("create");
@@ -388,118 +482,130 @@ const createButton =
 
 if (createButton) {
 
-  createButton.onclick =
-  function () {
+  createButton.addEventListener(
+    "click",
+    function () {
 
-    const name =
-      $("name")
-      .value
-      .trim();
-
-
-    const password =
-      $("pass")
-      .value;
+      const name =
+        $("name")
+          .value
+          .trim();
 
 
-    if (!name) {
-
-      alert(
-        "Please enter a name 💗"
-      );
-
-      return;
-    }
+      const password =
+        $("pass")
+          .value;
 
 
-    if (!password) {
+      if (!name) {
 
-      alert(
-        "Please create a password 🔐"
-      );
-
-      return;
-    }
-
-
-    if (photos.length === 0) {
-
-      alert(
-        "Please select at least one photo 📸"
-      );
-
-      return;
-    }
-
-
-    if (photos.length > MAX_PHOTOS) {
-
-      alert(
-        "Maximum 15 photos only 📸"
-      );
-
-      return;
-    }
-
-
-    const surpriseData =
-      makeData();
-
-
-    let encoded;
-
-
-    try {
-
-      encoded =
-        encodeData(
-          surpriseData
+        alert(
+          "Please enter the name 💗"
         );
 
-    } catch (error) {
+        $("name").focus();
 
-      alert(
-        "Could not create the surprise."
-      );
+        return;
+      }
 
-      return;
+
+      if (!password) {
+
+        alert(
+          "Please create a password 🔐"
+        );
+
+        $("pass").focus();
+
+        return;
+      }
+
+
+      if (photos.length === 0) {
+
+        alert(
+          "Please select at least one photo 📸"
+        );
+
+        return;
+      }
+
+
+      if (
+        photos.length >
+        MAX_PHOTOS
+      ) {
+
+        alert(
+          "Maximum 15 photos only 📸"
+        );
+
+        return;
+      }
+
+
+      const surpriseData =
+        makeData();
+
+
+      let encoded;
+
+
+      try {
+
+        encoded =
+          encodeData(
+            surpriseData
+          );
+
+      } catch (error) {
+
+        alert(
+          "Unable to create link 😭"
+        );
+
+        return;
+      }
+
+
+      const baseURL =
+        location.href
+          .split("#")[0];
+
+
+      const shareLink =
+        baseURL +
+        "#" +
+        encoded;
+
+
+      /*
+        Show generated link.
+      */
+
+      $("link").value =
+        shareLink;
+
+
+      $("result")
+        .classList
+        .remove("hidden");
+
+
+      $("result")
+        .scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+
     }
-
-
-    const baseURL =
-      location.href.split(
-        "#"
-      )[0];
-
-
-    const shareLink =
-      baseURL +
-      "#" +
-      encoded;
-
-
-    $("link").value =
-      shareLink;
-
-
-    $("result")
-      .classList
-      .remove("hidden");
-
-
-    $("result")
-      .scrollIntoView({
-        behavior: "smooth"
-      });
-
-  };
-
+  );
 }
 
 
-/* =========================
+/* =====================================================
    COPY LINK
-========================= */
+===================================================== */
 
 const copyButton =
   $("copy");
@@ -507,74 +613,116 @@ const copyButton =
 
 if (copyButton) {
 
-  copyButton.onclick =
-  async function () {
+  copyButton.addEventListener(
+    "click",
+    async function () {
 
-    const link =
-      $("link").value;
-
-
-    if (!link) {
-      return;
-    }
+      const link =
+        $("link").value;
 
 
-    try {
+      if (!link) {
 
-      await navigator
-        .clipboard
-        .writeText(link);
-
-
-      this.textContent =
-        "Copied! ❤️";
+        return;
+      }
 
 
-    } catch (error) {
-
-      const input =
-        $("link");
-
-
-      input.focus();
-
-      input.select();
-
-      input.setSelectionRange(
-        0,
-        input.value.length
-      );
-
+      /*
+        Modern clipboard
+      */
 
       try {
 
-        document.execCommand(
-          "copy"
-        );
+        if (
+          navigator.clipboard &&
+          window.isSecureContext
+        ) {
+
+          await navigator
+            .clipboard
+            .writeText(link);
 
 
-        this.textContent =
-          "Copied! ❤️";
+          this.textContent =
+            "Copied! ❤️";
 
 
-      } catch (copyError) {
+          setTimeout(
+            () => {
 
-        alert(
-          "Long press the link and choose Copy 📋"
+              this.textContent =
+                "Copy Surprise Link ❤️";
+
+            },
+            2000
+          );
+
+
+          return;
+        }
+
+      } catch (error) {
+
+        console.log(
+          "Clipboard API unavailable"
         );
 
       }
 
+
+      /*
+        Mobile fallback
+      */
+
+      try {
+
+        const input =
+          $("link");
+
+
+        input.focus();
+
+        input.select();
+
+        input.setSelectionRange(
+          0,
+          input.value.length
+        );
+
+
+        const success =
+          document.execCommand(
+            "copy"
+          );
+
+
+        if (success) {
+
+          this.textContent =
+            "Copied! ❤️";
+
+        } else {
+
+          this.textContent =
+            "Select & Copy 📋";
+
+        }
+
+      } catch (error) {
+
+        this.textContent =
+          "Long press to copy 📋";
+
+      }
+
     }
-
-  };
-
+  );
 }
 
 
-/* =========================
-   PASSWORD UNLOCK
-========================= */
+/* =====================================================
+   PASSWORD OPEN
+===================================================== */
 
 const openButton =
   $("open");
@@ -582,76 +730,112 @@ const openButton =
 
 if (openButton) {
 
-  openButton.onclick =
-  async function () {
+  openButton.addEventListener(
+    "click",
+    async function () {
 
-    if (!data) {
-      return;
-    }
+      if (!data) {
 
-
-    const entered =
-      $("unlock")
-      .value;
+        return;
+      }
 
 
-    if (
-      entered !==
-      data.password
-    ) {
+      const enteredPassword =
+        $("unlock")
+          .value;
+
+
+      if (
+        enteredPassword !==
+        data.password
+      ) {
+
+        $("wrong")
+          .textContent =
+          "Wrong password 😭";
+
+
+        $("unlock")
+          .focus();
+
+
+        return;
+      }
+
 
       $("wrong")
         .textContent =
-        "Wrong password 😭";
+        "";
 
-      return;
+
+      /*
+        Hide lock page
+      */
+
+      $("locked")
+        .classList
+        .add("hidden");
+
+
+      /*
+        Show surprise
+      */
+
+      $("surprise")
+        .classList
+        .remove("hidden");
+
+
+      $("sname")
+        .textContent =
+        data.name;
+
+
+      $("swish")
+        .textContent =
+        data.wish;
+
+
+      /*
+        Create vertical gallery
+      */
+
+      createGallery(
+        Array.isArray(
+          data.photos
+        )
+          ? data.photos
+          : []
+      );
+
+
+      /*
+        CONFETTI
+      */
+
+      startConfetti();
+
+
+      /*
+        IMPORTANT:
+        The password button click is
+        a real user gesture.
+
+        So mobile browsers are more
+        likely to allow audio here.
+      */
+
+      await startMusic();
+
+
     }
-
-
-    $("wrong")
-      .textContent = "";
-
-
-    $("locked")
-      .classList
-      .add("hidden");
-
-
-    $("surprise")
-      .classList
-      .remove("hidden");
-
-
-    $("sname")
-      .textContent =
-      data.name;
-
-
-    $("swish")
-      .textContent =
-      data.wish;
-
-
-    createGallery(
-      data.photos || []
-    );
-
-
-    startConfetti();
-
-
-    /* Try music after user interaction */
-
-    playMusic();
-
-  };
-
+  );
 }
 
 
-/* =========================
-   ENTER KEY
-========================= */
+/* =====================================================
+   ENTER KEY FOR PASSWORD
+===================================================== */
 
 const unlockInput =
   $("unlock");
@@ -668,19 +852,20 @@ if (unlockInput) {
         "Enter"
       ) {
 
+        event.preventDefault();
+
         $("open").click();
 
       }
 
     }
   );
-
 }
 
 
-/* =========================
-   CREATE VERTICAL GALLERY
-========================= */
+/* =====================================================
+   VERTICAL POLAROID GALLERY
+===================================================== */
 
 function createGallery(
   images
@@ -690,20 +875,16 @@ function createGallery(
     $("gallery");
 
 
-  if (!gallery) {
-    return;
-  }
-
-
-  gallery.innerHTML = "";
+  gallery.innerHTML =
+    "";
 
 
   const rotations = [
-    "-2deg",
+    "-3deg",
     "2deg",
-    "-1deg",
-    "1.5deg",
-    "-2.5deg"
+    "-2deg",
+    "3deg",
+    "-1deg"
   ];
 
 
@@ -713,10 +894,7 @@ function createGallery(
       MAX_PHOTOS
     )
     .forEach(
-      function (
-        src,
-        index
-      ) {
+      (src, index) => {
 
         const card =
           document.createElement(
@@ -743,15 +921,20 @@ function createGallery(
           );
 
 
-        image.src = src;
+        image.src =
+          src;
+
 
         image.alt =
-          "Birthday memory " +
-          (index + 1);
+          `Memory ${index + 1}`;
 
 
         image.loading =
           "lazy";
+
+
+        image.decoding =
+          "async";
 
 
         card.appendChild(
@@ -769,9 +952,9 @@ function createGallery(
 }
 
 
-/* =========================
-   MUSIC
-========================= */
+/* =====================================================
+   BACKGROUND MUSIC
+===================================================== */
 
 const music =
   $("bgMusic");
@@ -781,14 +964,56 @@ const musicButton =
   $("musicBtn");
 
 
-async function playMusic() {
+const musicStatus =
+  $("musicStatus");
+
+
+/*
+  IMPORTANT:
+  We do NOT show "music file missing"
+  popup automatically.
+
+  The browser checks the actual
+  music.mp3 file.
+*/
+
+
+if (music) {
+
+  music.addEventListener(
+    "error",
+    function () {
+
+      if (musicStatus) {
+
+        musicStatus.textContent =
+          "Please keep music.mp3 beside index.html 🎵";
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   START MUSIC
+===================================================== */
+
+async function startMusic() {
 
   if (!music) {
-    return;
+
+    return false;
   }
 
 
   try {
+
+    music.volume =
+      0.65;
+
 
     await music.play();
 
@@ -801,15 +1026,28 @@ async function playMusic() {
     }
 
 
+    if (musicStatus) {
+
+      musicStatus.textContent =
+        "Background music is playing 💗";
+
+    }
+
+
+    return true;
+
   } catch (error) {
 
     /*
-      Some mobile browsers
-      block autoplay.
-
-      The user can press
-      Play Music manually.
+      Mobile browser may block
+      playback until another tap.
     */
+
+    console.log(
+      "Autoplay blocked:",
+      error
+    );
+
 
     if (musicButton) {
 
@@ -818,10 +1056,24 @@ async function playMusic() {
 
     }
 
+
+    if (musicStatus) {
+
+      musicStatus.textContent =
+        "Tap Play Music to start 🎵";
+
+    }
+
+
+    return false;
   }
 
 }
 
+
+/* =====================================================
+   MUSIC BUTTON
+===================================================== */
 
 if (
   musicButton &&
@@ -838,38 +1090,50 @@ if (
           music.paused
         ) {
 
-          await music.play();
-
-          this.textContent =
-            "🔊 Music On";
+          await startMusic();
 
         } else {
 
           music.pause();
 
+
           this.textContent =
             "🎵 Play Music";
+
+
+          if (musicStatus) {
+
+            musicStatus.textContent =
+              "Music paused 💗";
+
+          }
 
         }
 
       } catch (error) {
 
-        alert(
-          "Music file கிடைக்கவில்லை.\n\n" +
-          "music.mp3 file-ஐ index.html இருக்கும் அதே folder-ல் வை."
+        console.error(
+          "Music error:",
+          error
         );
+
+        if (musicStatus) {
+
+          musicStatus.textContent =
+            "Check that music.mp3 is uploaded 🎵";
+
+        }
 
       }
 
     }
   );
-
 }
 
 
-/* =========================
+/* =====================================================
    CONFETTI
-========================= */
+===================================================== */
 
 function startConfetti() {
 
@@ -879,7 +1143,8 @@ function startConfetti() {
     "✨",
     "🎈",
     "🌸",
-    "🥳"
+    "🥳",
+    "💕"
   ];
 
 
@@ -926,7 +1191,7 @@ function startConfetti() {
 
 
     item.style.zIndex =
-      "99999";
+      "9999";
 
 
     item.style.pointerEvents =
@@ -944,15 +1209,11 @@ function startConfetti() {
 
 
     requestAnimationFrame(
-      function () {
+      () => {
 
         item.style.transform =
-          "translateY(110vh) rotate(" +
-          (
-            Math.random() *
-            600
-          ) +
-          "deg)";
+          `translateY(110vh)
+           rotate(${Math.random() * 600}deg)`;
 
 
         item.style.opacity =
@@ -963,7 +1224,7 @@ function startConfetti() {
 
 
     setTimeout(
-      function () {
+      () => {
 
         item.remove();
 
