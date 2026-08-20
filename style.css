@@ -1,320 +1,330 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Special Surprise 💗</title>
-
-  <link
-    rel="stylesheet"
-    href="style.css"
-  >
-</head>
-
-<body>
-
-  <!-- =========================================
-       CREATE PAGE
-  ========================================== -->
-
-  <main
-    id="creator"
-    class="page"
-  >
-
-    <div class="heart">💗</div>
-
-    <h1>
-      Create a Special Surprise
-    </h1>
-
-    <p class="intro">
-      Create a beautiful surprise for someone special.
-      Friend, partner, sibling, parent, or anyone you love. ✨
-    </p>
-
-
-    <!-- NAME -->
-
-    <label for="name">
-      Recipient's Name
-    </label>
-
-    <input
-      id="name"
-      type="text"
-      placeholder="e.g. Anu"
-      autocomplete="off"
-    >
-
-
-    <!-- PASSWORD -->
-
-    <label for="pass">
-      Create a Secret Password 🔐
-    </label>
-
-    <input
-      id="pass"
-      type="password"
-      placeholder="Enter a password"
-      autocomplete="new-password"
-    >
-
-
-    <!-- MESSAGE -->
-
-    <label for="wish">
-      Your Special Message 💌
-    </label>
-
-    <textarea
-      id="wish"
-      placeholder="Write something special..."
-    ></textarea>
-
-
-    <!-- PHOTOS -->
-
-    <label for="files">
-      Photos
-      <span class="small">
-        — maximum 15
-      </span>
-    </label>
-
-    <input
-      id="files"
-      type="file"
-      accept="image/*"
-      multiple
-    >
-
-    <p
-      id="photoCount"
-      class="photo-count"
-    >
-      0 / 15 photos selected
-    </p>
-
-    <div
-      id="thumbs"
-      class="thumbs"
-    ></div>
-
-
-    <!-- MUSIC INFO -->
-
-    <div class="music-info">
-
-      <div class="music-icon">
-        🎵
-      </div>
-
-      <div>
-        <strong>
-          Background Music
-        </strong>
-
-        <small>
-          Keep <b>music.mp3</b> beside index.html
-        </small>
-      </div>
-
-    </div>
-
-
-    <!-- CREATE -->
-
-    <button
-      id="create"
-      class="main-button"
-      type="button"
-    >
-      Create Surprise 💗
-    </button>
-
-
-    <!-- RESULT -->
-
-    <section
-      id="result"
-      class="result hidden"
-    >
-
-      <h2>
-        Your Surprise Link 💌
-      </h2>
-
-      <p>
-        Copy this link and send it to them.
-      </p>
-
-      <input
-        id="link"
-        type="text"
-        readonly
-      >
-
-      <button
-        id="copy"
-        class="main-button"
-        type="button"
-      >
-        Copy Surprise Link ❤️
-      </button>
-
-    </section>
-
-  </main>
-
-
-  <!-- =========================================
-       PASSWORD PAGE
-  ========================================== -->
-
-  <main
-    id="locked"
-    class="page hidden"
-  >
-
-    <div class="lock-icon">
-      🔐
-    </div>
-
-    <h1>
-      A Special Surprise 💗
-    </h1>
-
-    <p>
-      This surprise is specially made for
-    </p>
-
-    <h2 id="lockedName">
-      Someone Special
-    </h2>
-
-    <label for="unlock">
-      Enter Secret Password
-    </label>
-
-    <input
-      id="unlock"
-      type="password"
-      placeholder="Enter password"
-      autocomplete="off"
-    >
-
-    <button
-      id="open"
-      class="main-button"
-      type="button"
-    >
-      Open Surprise 💖
-    </button>
-
-    <p
-      id="wrong"
-      class="wrong"
-    ></p>
-
-  </main>
-
-
-  <!-- =========================================
-       SURPRISE PAGE
-  ========================================== -->
-
-  <main
-    id="surprise"
-    class="surprise hidden"
-  >
-
-    <div class="surprise-header">
-
-      <div class="big-heart">
-        💕
-      </div>
-
-      <h1>
-        Happy Birthday,
-        <span id="sname">
-          You
-        </span>! 🎂
-      </h1>
-
-      <p id="swish"></p>
-
-    </div>
-
-
-    <!-- MUSIC -->
-
-    <div class="music-box">
-
-      <button
-        id="musicBtn"
-        type="button"
-      >
-        🎵 Play Music
-      </button>
-
-      <p id="musicStatus">
-        Tap the button if music doesn't start.
-      </p>
-
-    </div>
-
-
-    <!-- VERTICAL GALLERY -->
-
-    <section
-      id="gallery"
-      class="gallery"
-    ></section>
-
-
-    <div class="ending">
-      Made with ❤️ just for you
-    </div>
-
-  </main>
-
-
-  <!-- =========================================
-       AUDIO
-  ========================================== -->
-
-  <audio
-    id="bgMusic"
-    loop
-    preload="auto"
-    playsinline
-  >
-
-    <source
-      src="./music.mp3"
-      type="audio/mpeg"
-    >
-
-    Your browser does not support audio.
-
-  </audio>
-
-
-  <!-- =========================================
-       SCRIPT
-  ========================================== -->
-
-  <script
-    type="module"
-    src="script.js"
-  ></script>
-
-</body>
-</html>
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #ffd6e7, #d9e7ff);
+  color: #333;
+}
+
+/* IMPORTANT */
+.hidden {
+  display: none !important;
+}
+
+
+/* =========================
+   COMMON PAGE
+========================= */
+
+.page {
+  width: min(92%, 700px);
+  margin: 40px auto;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 25px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.heart,
+.lock-icon,
+.big-heart {
+  text-align: center;
+  font-size: 55px;
+}
+
+h1 {
+  text-align: center;
+  color: #e84a82;
+}
+
+h2 {
+  color: #e84a82;
+}
+
+.intro {
+  text-align: center;
+  line-height: 1.6;
+}
+
+
+/* =========================
+   FORM
+========================= */
+
+label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 7px;
+  font-weight: bold;
+  color: #555;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 13px;
+  border: 2px solid #f1b6ca;
+  border-radius: 12px;
+  font-size: 16px;
+  background: white;
+  outline: none;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #e84a82;
+}
+
+textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+input[type="file"] {
+  padding: 10px;
+}
+
+
+/* =========================
+   PHOTO INFO
+========================= */
+
+.small {
+  font-size: 13px;
+  color: #888;
+}
+
+.photo-count {
+  text-align: center;
+  color: #777;
+}
+
+.thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.thumbs img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+
+/* =========================
+   MUSIC
+========================= */
+
+.music-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 25px 0;
+  padding: 15px;
+  border-radius: 15px;
+  background: #fff0f6;
+}
+
+.music-icon {
+  font-size: 30px;
+}
+
+.music-info small {
+  display: block;
+  margin-top: 5px;
+  color: #777;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+
+.main-button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #ff5f9e, #e83e75);
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.main-button:hover {
+  opacity: 0.9;
+}
+
+.main-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =========================
+   RESULT
+========================= */
+
+.result {
+  margin-top: 30px;
+  padding: 25px;
+  border-radius: 20px;
+  background: #fff0f6;
+  text-align: center;
+}
+
+.result input {
+  margin-top: 10px;
+}
+
+
+/* =========================
+   LOCK PAGE
+========================= */
+
+#locked {
+  text-align: center;
+}
+
+#locked input {
+  margin-top: 10px;
+}
+
+.wrong {
+  color: #e53935;
+  font-weight: bold;
+}
+
+
+/* =========================
+   SURPRISE PAGE
+========================= */
+
+.surprise {
+  width: min(94%, 850px);
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.surprise-header {
+  text-align: center;
+  padding: 30px;
+}
+
+.surprise-header h1 {
+  font-size: 38px;
+}
+
+#swish {
+  font-size: 20px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+
+/* =========================
+   MUSIC BOX
+========================= */
+
+.music-box {
+  text-align: center;
+  margin: 20px auto 35px;
+}
+
+.music-box button {
+  padding: 13px 25px;
+  border: none;
+  border-radius: 20px;
+  background: #e84a82;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#musicStatus {
+  color: #777;
+}
+
+
+/* =========================
+   GALLERY
+========================= */
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: center;
+}
+
+.photo-card {
+  width: min(100%, 650px);
+  padding: 10px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+  transform: rotate(var(--rotation));
+}
+
+.photo-card img {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+}
+
+
+/* =========================
+   ENDING
+========================= */
+
+.ending {
+  text-align: center;
+  margin: 50px 0 30px;
+  color: #e84a82;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  .page {
+    width: 94%;
+    margin: 20px auto;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .thumbs {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .thumbs img {
+    height: 80px;
+  }
+
+  .surprise-header h1 {
+    font-size: 30px;
+  }
+
+}
