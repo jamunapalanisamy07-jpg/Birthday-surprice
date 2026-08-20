@@ -219,7 +219,7 @@ const copyButton = document.getElementById("copy");
 
 if (copyButton) {
 
-    copyButton.addEventListener("click", function () {
+    copyButton.addEventListener("click", async function () {
 
         const linkInput = document.getElementById("link");
 
@@ -228,46 +228,84 @@ if (copyButton) {
             return;
         }
 
-        // Select the link
-        linkInput.focus();
-        linkInput.select();
-        linkInput.setSelectionRange(0, linkInput.value.length);
+        const text = linkInput.value;
 
-        // Old browser/mobile friendly copy
-        let copied = false;
-
+        // First try modern clipboard
         try {
-            copied = document.execCommand("copy");
+
+            if (
+                navigator.clipboard &&
+                window.isSecureContext
+            ) {
+
+                await navigator.clipboard.writeText(text);
+
+                copyButton.textContent = "Copied! ❤️";
+
+                setTimeout(() => {
+                    copyButton.textContent =
+                        "Copy Surprise Link ❤️";
+                }, 2000);
+
+                return;
+            }
+
         } catch (error) {
-            copied = false;
-        }
 
-        if (copied) {
-
-            copyButton.textContent = "Copied! ❤️";
-
-            setTimeout(function () {
-                copyButton.textContent =
-                    "Copy Surprise Link ❤️";
-            }, 2000);
-
-        } else {
-
-            // If automatic copy fails,
-            // keep link selected for manual copy
-            copyButton.textContent =
-                "Link Selected 📋";
-
-            alert(
-                "Link selected ❤️\n\n" +
-                "Long press the link → Copy"
+            console.log(
+                "Clipboard API failed, using fallback..."
             );
         }
 
+
+        // Mobile fallback
+        try {
+
+            linkInput.focus();
+            linkInput.select();
+            linkInput.setSelectionRange(
+                0,
+                linkInput.value.length
+            );
+
+            const success =
+                document.execCommand("copy");
+
+            if (success) {
+
+                copyButton.textContent =
+                    "Copied! ❤️";
+
+                setTimeout(() => {
+                    copyButton.textContent =
+                        "Copy Surprise Link ❤️";
+                }, 2000);
+
+                return;
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Fallback copy failed:",
+                error
+            );
+        }
+
+
+        // If mobile browser blocks automatic copy
+        linkInput.focus();
+        linkInput.select();
+        linkInput.setSelectionRange(
+            0,
+            linkInput.value.length
+        );
+
+        copyButton.textContent =
+            "Long Press → Copy 📋";
+
     });
-
 }
-
 
 // ===============================
 // READ SHARED LINK
