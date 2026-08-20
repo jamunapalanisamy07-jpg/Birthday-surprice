@@ -219,7 +219,7 @@ const copyButton = document.getElementById("copy");
 
 if (copyButton) {
 
-    copyButton.addEventListener("click", async function () {
+    copyButton.addEventListener("click", function () {
 
         const linkInput = document.getElementById("link");
 
@@ -228,72 +228,89 @@ if (copyButton) {
             return;
         }
 
-        const text = linkInput.value;
+        const text = linkInput.value.trim();
 
-        // First try modern clipboard
-        try {
+        // Select the link
+        linkInput.focus();
+        linkInput.select();
+        linkInput.setSelectionRange(0, text.length);
 
-            if (
-                navigator.clipboard &&
-                window.isSecureContext
-            ) {
+        // Method 1: Modern Clipboard
+        if (navigator.clipboard && window.isSecureContext) {
 
-                await navigator.clipboard.writeText(text);
+            navigator.clipboard.writeText(text)
+                .then(function () {
 
-                copyButton.textContent = "Copied! ❤️";
+                    copyButton.textContent = "Copied! ❤️";
 
-                setTimeout(() => {
-                    copyButton.textContent =
-                        "Copy Surprise Link ❤️";
-                }, 2000);
+                    setTimeout(function () {
+                        copyButton.textContent =
+                            "Copy Surprise Link ❤️";
+                    }, 2000);
 
-                return;
-            }
+                })
+                .catch(function () {
 
-        } catch (error) {
+                    // Mobile fallback
+                    fallbackCopy(text);
+                });
 
-            console.log(
-                "Clipboard API failed, using fallback..."
-            );
+        } else {
+
+            // Mobile fallback
+            fallbackCopy(text);
         }
+    });
+}
 
 
-        // Mobile fallback
-        try {
+// =====================================================
+// FALLBACK COPY - MOBILE
+// =====================================================
 
-            linkInput.focus();
-            linkInput.select();
-            linkInput.setSelectionRange(
-                0,
-                linkInput.value.length
-            );
+function fallbackCopy(text) {
 
-            const success =
-                document.execCommand("copy");
+    const temp = document.createElement("textarea");
 
-            if (success) {
+    temp.value = text;
 
-                copyButton.textContent =
-                    "Copied! ❤️";
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
+    temp.style.top = "0";
 
-                setTimeout(() => {
-                    copyButton.textContent =
-                        "Copy Surprise Link ❤️";
-                }, 2000);
+    document.body.appendChild(temp);
 
-                return;
-            }
+    temp.focus();
+    temp.select();
+    temp.setSelectionRange(0, temp.value.length);
 
-        } catch (error) {
+    let copied = false;
 
-            console.log(
-                "Fallback copy failed:",
-                error
-            );
-        }
+    try {
+        copied = document.execCommand("copy");
+    } catch (error) {
+        copied = false;
+    }
 
+    document.body.removeChild(temp);
 
-        // If mobile browser blocks automatic copy
+    if (copied) {
+
+        const copyButton = document.getElementById("copy");
+
+        copyButton.textContent = "Copied! ❤️";
+
+        setTimeout(function () {
+            copyButton.textContent =
+                "Copy Surprise Link ❤️";
+        }, 2000);
+
+    } else {
+
+        // If mobile browser blocks copying,
+        // select the link so user can long-press Copy.
+        const linkInput = document.getElementById("link");
+
         linkInput.focus();
         linkInput.select();
         linkInput.setSelectionRange(
@@ -301,10 +318,11 @@ if (copyButton) {
             linkInput.value.length
         );
 
-        copyButton.textContent =
-            "Long Press → Copy 📋";
-
-    });
+        alert(
+            "Link selected ❤️\n\n" +
+            "Long press the selected link → Copy"
+        );
+    }
 }
 
 // ===============================
