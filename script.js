@@ -1,16 +1,7 @@
 "use strict";
 
-/*
-=========================================================
- SPECIAL SURPRISE
- NO FIREBASE
- MATCHES YOUR CURRENT index.html
-=========================================================
-*/
-
-
 // =====================================================
-// HELPER
+// ELEMENT HELPER
 // =====================================================
 
 const $ = (id) => document.getElementById(id);
@@ -22,18 +13,11 @@ const $ = (id) => document.getElementById(id);
 
 const MAX_PHOTOS = 15;
 
-
-// =====================================================
-// VARIABLES
-// =====================================================
-
 let selectedFiles = [];
 
-let birthdayData = null;
-
 
 // =====================================================
-// READ DATA FROM SHARE LINK
+// GET DATA FROM URL HASH
 // =====================================================
 
 function getBirthdayData() {
@@ -46,20 +30,19 @@ function getBirthdayData() {
 
     try {
 
-        const encodedData =
-            hash.substring(6);
+        const encoded = hash.substring(6);
 
-        const decoded =
+        const json =
             decodeURIComponent(
-                atob(encodedData)
+                atob(encoded)
             );
 
-        return JSON.parse(decoded);
+        return JSON.parse(json);
 
     } catch (error) {
 
         console.error(
-            "Invalid birthday data:",
+            "Unable to read birthday data:",
             error
         );
 
@@ -74,52 +57,51 @@ function getBirthdayData() {
 
 const fileInput = $("files");
 
-
 if (fileInput) {
 
-    fileInput.addEventListener(
-        "change",
-        function () {
+    fileInput.addEventListener("change", function () {
 
-            selectedFiles =
-                Array.from(this.files)
-                    .filter(
-                        function (file) {
-
-                            return file.type.startsWith(
-                                "image/"
-                            );
-
-                        }
-                    )
-                    .slice(
-                        0,
-                        MAX_PHOTOS
-                    );
+        selectedFiles =
+            Array.from(this.files)
+                .filter(file =>
+                    file.type.startsWith("image/")
+                )
+                .slice(0, MAX_PHOTOS);
 
 
-            if (
-                this.files.length >
-                MAX_PHOTOS
-            ) {
+        if (this.files.length > MAX_PHOTOS) {
 
-                alert(
-                    "Maximum 15 photos only 📸"
-                );
-
-            }
-
-
-            showThumbnails();
-
+            alert(
+                "Maximum 15 photos only 📸"
+            );
         }
-    );
 
+
+        updatePhotoCount();
+
+        showThumbnails();
+    });
 }
 
 
 // =====================================================
-// SHOW PHOTO THUMBNAILS
+// PHOTO COUNT
+// =====================================================
+
+function updatePhotoCount() {
+
+    const photoCount =
+        $("photoCount");
+
+    if (!photoCount) return;
+
+    photoCount.textContent =
+        `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
+}
+
+
+// =====================================================
+// SHOW THUMBNAILS
 // =====================================================
 
 function showThumbnails() {
@@ -127,109 +109,67 @@ function showThumbnails() {
     const thumbs =
         $("thumbs");
 
-    const photoCount =
-        $("photoCount");
-
-
-    if (!thumbs) {
-        return;
-    }
-
+    if (!thumbs) return;
 
     thumbs.innerHTML = "";
 
 
-    if (photoCount) {
+    selectedFiles.forEach(file => {
 
-        photoCount.textContent =
-            `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
-
-    }
+        const reader =
+            new FileReader();
 
 
-    selectedFiles.forEach(
-        function (file) {
+        reader.onload = function () {
 
-            const reader =
-                new FileReader();
+            const img =
+                document.createElement("img");
 
+            img.src =
+                reader.result;
 
-            reader.onload =
-                function () {
+            img.alt =
+                "Selected photo";
 
-                    const img =
-                        document.createElement(
-                            "img"
-                        );
-
-
-                    img.src =
-                        reader.result;
+            thumbs.appendChild(img);
+        };
 
 
-                    img.alt =
-                        "Selected photo";
-
-
-                    thumbs.appendChild(
-                        img
-                    );
-
-                };
-
-
-            reader.readAsDataURL(
-                file
-            );
-
-        }
-    );
-
+        reader.readAsDataURL(file);
+    });
 }
 
 
 // =====================================================
-// FILE TO BASE64
+// FILE → BASE64
 // =====================================================
 
 function fileToBase64(file) {
 
-    return new Promise(
-        function (resolve, reject) {
+    return new Promise((resolve, reject) => {
 
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                function () {
-
-                    resolve(
-                        reader.result
-                    );
-
-                };
+        const reader =
+            new FileReader();
 
 
-            reader.onerror =
-                function () {
+        reader.onload = () => {
 
-                    reject(
-                        new Error(
-                            "Unable to read photo"
-                        )
-                    );
-
-                };
+            resolve(reader.result);
+        };
 
 
-            reader.readAsDataURL(
-                file
+        reader.onerror = () => {
+
+            reject(
+                new Error(
+                    "Photo read panna mudiyala"
+                )
             );
+        };
 
-        }
-    );
 
+        reader.readAsDataURL(file);
+    });
 }
 
 
@@ -257,28 +197,11 @@ if (createButton) {
                 $("wish");
 
 
-            if (
-                !nameInput ||
-                !passwordInput ||
-                !wishInput
-            ) {
-
-                alert(
-                    "Form fields not found 😭"
-                );
-
-                return;
-
-            }
-
-
             const name =
                 nameInput.value.trim();
 
-
             const password =
                 passwordInput.value;
-
 
             const wish =
                 wishInput.value.trim() ||
@@ -298,7 +221,6 @@ if (createButton) {
                 nameInput.focus();
 
                 return;
-
             }
 
 
@@ -311,7 +233,6 @@ if (createButton) {
                 passwordInput.focus();
 
                 return;
-
             }
 
 
@@ -319,20 +240,17 @@ if (createButton) {
             // BUTTON
             // -----------------------------------------
 
-            createButton.disabled =
-                true;
+            createButton.disabled = true;
 
             createButton.textContent =
-                "Creating surprise... ⏳";
+                "Creating Surprise... ⏳";
 
 
             try {
 
-                /*
-                -----------------------------------------
-                PHOTO DATA
-                -----------------------------------------
-                */
+                // -------------------------------------
+                // PHOTOS
+                // -------------------------------------
 
                 const photos = [];
 
@@ -353,66 +271,58 @@ if (createButton) {
                         );
 
 
-                    photos.push(
-                        base64
-                    );
-
+                    photos.push(base64);
                 }
 
 
-                /*
-                -----------------------------------------
-                CREATE DATA
-                -----------------------------------------
-                */
+                // -------------------------------------
+                // DATA
+                // -------------------------------------
 
-                const data = {
+                const birthdayData = {
 
-                    name:
-                        name,
+                    name: name,
 
-                    password:
-                        password,
+                    password: password,
 
-                    wish:
-                        wish,
+                    wish: wish,
 
-                    photos:
-                        photos
-
+                    photos: photos
                 };
 
 
-                /*
-                -----------------------------------------
-                CONVERT DATA
-                -----------------------------------------
-                */
+                // -------------------------------------
+                // JSON
+                // -------------------------------------
 
                 const json =
                     JSON.stringify(
-                        data
+                        birthdayData
                     );
 
+
+                // -------------------------------------
+                // ENCODE
+                // -------------------------------------
 
                 const encodedData =
                     btoa(
-                        encodeURIComponent(
-                            json
-                        )
+                        encodeURIComponent(json)
                     );
 
 
-                /*
-                -----------------------------------------
-                CREATE SHARE LINK
-                -----------------------------------------
-                */
+                // -------------------------------------
+                // CURRENT PAGE URL
+                // -------------------------------------
 
                 const baseURL =
                     window.location.href
                         .split("#")[0];
 
+
+                // -------------------------------------
+                // CREATE SHARE LINK
+                // -------------------------------------
 
                 const shareLink =
                     baseURL +
@@ -420,11 +330,15 @@ if (createButton) {
                     encodedData;
 
 
-                /*
-                -----------------------------------------
-                SHOW LINK
-                -----------------------------------------
-                */
+                console.log(
+                    "SURPRISE LINK:",
+                    shareLink
+                );
+
+
+                // -------------------------------------
+                // SHOW RESULT
+                // -------------------------------------
 
                 const linkInput =
                     $("link");
@@ -437,7 +351,6 @@ if (createButton) {
 
                     linkInput.value =
                         shareLink;
-
                 }
 
 
@@ -449,13 +362,9 @@ if (createButton) {
 
 
                     result.scrollIntoView({
-                        behavior:
-                            "smooth",
-
-                        block:
-                            "center"
+                        behavior: "smooth",
+                        block: "center"
                     });
-
                 }
 
 
@@ -463,63 +372,28 @@ if (createButton) {
                     "Surprise Created ❤️";
 
 
-                console.log(
-                    "SURPRISE LINK:",
-                    shareLink
-                );
-
-
-                /*
-                -----------------------------------------
-                CHECK URL SIZE
-                -----------------------------------------
-                */
-
-                if (
-                    shareLink.length >
-                    1800000
-                ) {
-
-                    alert(
-                        "Photos are too large 😭\n\n" +
-                        "Please try fewer photos."
-                    );
-
-                } else {
-
-                    alert(
-                        "Surprise created successfully! 🎂❤️"
-                    );
-
-                }
-
-
             } catch (error) {
 
                 console.error(
-                    "Create error:",
+                    "CREATE ERROR:",
                     error
                 );
 
 
                 alert(
-                    "Something went wrong 😭\n\n" +
+                    "Link create panna mudiyala 😭\n\n" +
                     error.message
                 );
 
 
                 createButton.textContent =
                     "Create Surprise 💗";
-
             }
 
 
-            createButton.disabled =
-                false;
-
+            createButton.disabled = false;
         }
     );
-
 }
 
 
@@ -547,11 +421,10 @@ if (copyButton) {
             ) {
 
                 alert(
-                    "First create the surprise link ❤️"
+                    "First Create Surprise button press pannu ❤️"
                 );
 
                 return;
-
             }
 
 
@@ -566,15 +439,12 @@ if (copyButton) {
                     "Copied! ❤️";
 
 
-                setTimeout(
-                    function () {
+                setTimeout(() => {
 
-                        copyButton.textContent =
-                            "Copy Surprise Link ❤️";
+                    this.textContent =
+                        "Copy Surprise Link ❤️";
 
-                    },
-                    2000
-                );
+                }, 2000);
 
 
             } catch (error) {
@@ -590,22 +460,19 @@ if (copyButton) {
 
 
                 alert(
-                    "Link selected. Copy it manually 📋"
+                    "Link selected. Copy manually 📋"
                 );
-
             }
-
         }
     );
-
 }
 
 
 // =====================================================
-// CHECK IF THIS IS A SHARED LINK
+// OPEN SHARED SURPRISE
 // =====================================================
 
-birthdayData =
+const birthdayData =
     getBirthdayData();
 
 
@@ -621,55 +488,33 @@ if (birthdayData) {
         $("lockedName");
 
 
-    /*
-    -----------------------------------------
-    HIDE CREATE PAGE
-    -----------------------------------------
-    */
-
     if (creator) {
 
         creator.classList.add(
             "hidden"
         );
-
     }
 
-
-    /*
-    -----------------------------------------
-    SHOW PASSWORD PAGE
-    -----------------------------------------
-    */
 
     if (locked) {
 
         locked.classList.remove(
             "hidden"
         );
-
     }
 
-
-    /*
-    -----------------------------------------
-    SHOW NAME
-    -----------------------------------------
-    */
 
     if (lockedName) {
 
         lockedName.textContent =
             birthdayData.name ||
             "Someone Special";
-
     }
-
 }
 
 
 // =====================================================
-// PASSWORD OPEN
+// OPEN BUTTON
 // =====================================================
 
 const openButton =
@@ -689,7 +534,6 @@ if (openButton) {
                 );
 
                 return;
-
             }
 
 
@@ -698,16 +542,8 @@ if (openButton) {
 
 
             const enteredPassword =
-                unlockInput
-                    ? unlockInput.value
-                    : "";
+                unlockInput.value;
 
-
-            /*
-            -----------------------------------------
-            CHECK PASSWORD
-            -----------------------------------------
-            */
 
             if (
                 enteredPassword !==
@@ -722,48 +558,24 @@ if (openButton) {
 
                     wrong.textContent =
                         "Wrong password 😭 Try again.";
-
                 }
 
 
-                if (unlockInput) {
-
-                    unlockInput.focus();
-
-                }
-
+                unlockInput.focus();
 
                 return;
-
             }
 
 
-            /*
-            -----------------------------------------
-            CORRECT PASSWORD
-            -----------------------------------------
-            */
-
-            const wrong =
-                $("wrong");
-
-
-            if (wrong) {
-
-                wrong.textContent =
-                    "";
-
-            }
-
-
-            /*
-            -----------------------------------------
-            HIDE LOCK
-            -----------------------------------------
-            */
+            // -----------------------------------------
+            // CORRECT PASSWORD
+            // -----------------------------------------
 
             const locked =
                 $("locked");
+
+            const surprise =
+                $("surprise");
 
 
             if (locked) {
@@ -771,18 +583,7 @@ if (openButton) {
                 locked.classList.add(
                     "hidden"
                 );
-
             }
-
-
-            /*
-            -----------------------------------------
-            SHOW SURPRISE
-            -----------------------------------------
-            */
-
-            const surprise =
-                $("surprise");
 
 
             if (surprise) {
@@ -790,15 +591,12 @@ if (openButton) {
                 surprise.classList.remove(
                     "hidden"
                 );
-
             }
 
 
-            /*
-            -----------------------------------------
-            NAME
-            -----------------------------------------
-            */
+            // -----------------------------------------
+            // NAME
+            // -----------------------------------------
 
             const sname =
                 $("sname");
@@ -809,15 +607,12 @@ if (openButton) {
                 sname.textContent =
                     birthdayData.name ||
                     "You";
-
             }
 
 
-            /*
-            -----------------------------------------
-            MESSAGE
-            -----------------------------------------
-            */
+            // -----------------------------------------
+            // MESSAGE
+            // -----------------------------------------
 
             const swish =
                 $("swish");
@@ -826,52 +621,38 @@ if (openButton) {
             if (swish) {
 
                 swish.textContent =
-                    birthdayData.wish ||
-                    "";
-
+                    birthdayData.wish || "";
             }
 
 
-            /*
-            -----------------------------------------
-            PHOTOS
-            -----------------------------------------
-            */
+            // -----------------------------------------
+            // PHOTOS
+            // -----------------------------------------
 
             createGallery(
-                Array.isArray(
-                    birthdayData.photos
-                )
-                    ? birthdayData.photos
-                    : []
+                birthdayData.photos || []
             );
 
 
-            /*
-            -----------------------------------------
-            CONFETTI
-            -----------------------------------------
-            */
+            // -----------------------------------------
+            // CONFETTI
+            // -----------------------------------------
 
             startConfetti();
 
 
-            /*
-            -----------------------------------------
-            MUSIC
-            -----------------------------------------
-            */
+            // -----------------------------------------
+            // MUSIC
+            // -----------------------------------------
 
             await startMusic();
-
         }
     );
-
 }
 
 
 // =====================================================
-// ENTER KEY
+// ENTER KEY FOR PASSWORD
 // =====================================================
 
 const unlockInput =
@@ -884,25 +665,20 @@ if (unlockInput) {
         "keydown",
         function (event) {
 
-            if (
-                event.key ===
-                "Enter"
-            ) {
+            if (event.key === "Enter") {
 
                 event.preventDefault();
 
+                const openButton =
+                    $("open");
 
-                if ($("open")) {
+                if (openButton) {
 
-                    $("open").click();
-
+                    openButton.click();
                 }
-
             }
-
         }
     );
-
 }
 
 
@@ -916,15 +692,10 @@ function createGallery(images) {
         $("gallery");
 
 
-    if (!gallery) {
-
-        return;
-
-    }
+    if (!gallery) return;
 
 
-    gallery.innerHTML =
-        "";
+    gallery.innerHTML = "";
 
 
     const rotations = [
@@ -937,66 +708,50 @@ function createGallery(images) {
 
 
     images
-        .slice(
-            0,
-            MAX_PHOTOS
-        )
-        .forEach(
-            function (src, index) {
+        .slice(0, MAX_PHOTOS)
+        .forEach((src, index) => {
 
-                const card =
-                    document.createElement(
-                        "div"
-                    );
+            const card =
+                document.createElement("div");
 
 
-                card.className =
-                    "photo-card";
+            card.className =
+                "photo-card";
 
 
-                card.style.setProperty(
-                    "--rotation",
-                    rotations[
-                        index %
-                        rotations.length
-                    ]
-                );
+            card.style.setProperty(
+                "--rotation",
+                rotations[
+                    index % rotations.length
+                ]
+            );
 
 
-                const image =
-                    document.createElement(
-                        "img"
-                    );
+            const image =
+                document.createElement("img");
 
 
-                image.src =
-                    src;
+            image.src =
+                src;
 
 
-                image.alt =
-                    `Birthday memory ${index + 1}`;
+            image.alt =
+                `Birthday memory ${index + 1}`;
 
 
-                image.loading =
-                    "lazy";
+            image.loading =
+                "lazy";
 
 
-                image.decoding =
-                    "async";
+            card.appendChild(
+                image
+            );
 
 
-                card.appendChild(
-                    image
-                );
-
-
-                gallery.appendChild(
-                    card
-                );
-
-            }
-        );
-
+            gallery.appendChild(
+                card
+            );
+        });
 }
 
 
@@ -1016,11 +771,7 @@ const musicStatus =
 
 async function startMusic() {
 
-    if (!music) {
-
-        return false;
-
-    }
+    if (!music) return false;
 
 
     try {
@@ -1036,7 +787,6 @@ async function startMusic() {
 
             musicButton.textContent =
                 "🔊 Music On";
-
         }
 
 
@@ -1044,7 +794,6 @@ async function startMusic() {
 
             musicStatus.textContent =
                 "Background music is playing 💗";
-
         }
 
 
@@ -1053,17 +802,10 @@ async function startMusic() {
 
     } catch (error) {
 
-        console.log(
-            "Music needs manual tap:",
-            error
-        );
-
-
         if (musicButton) {
 
             musicButton.textContent =
                 "🎵 Play Music";
-
         }
 
 
@@ -1071,14 +813,11 @@ async function startMusic() {
 
             musicStatus.textContent =
                 "Tap Play Music to start 🎵";
-
         }
 
 
         return false;
-
     }
-
 }
 
 
@@ -1095,12 +834,119 @@ if (
         "click",
         async function () {
 
-            if (
-                music.paused
-            ) {
+            if (music.paused) {
 
                 await startMusic();
 
             } else {
 
                 music.pause();
+
+
+                this.textContent =
+                    "🎵 Play Music";
+
+
+                if (musicStatus) {
+
+                    musicStatus.textContent =
+                        "Music paused 💗";
+                }
+            }
+        }
+    );
+}
+
+
+// =====================================================
+// CONFETTI
+// =====================================================
+
+function startConfetti() {
+
+    const emojis = [
+        "🎉",
+        "💗",
+        "✨",
+        "🎈",
+        "🌸",
+        "🥳",
+        "💕",
+        "🎂"
+    ];
+
+
+    for (
+        let i = 0;
+        i < 40;
+        i++
+    ) {
+
+        const item =
+            document.createElement("span");
+
+
+        item.textContent =
+            emojis[
+                Math.floor(
+                    Math.random() *
+                    emojis.length
+                )
+            ];
+
+
+        item.style.position =
+            "fixed";
+
+
+        item.style.left =
+            Math.random() * 100 + "vw";
+
+
+        item.style.top =
+            "-40px";
+
+
+        item.style.fontSize =
+            18 +
+            Math.random() * 20 +
+            "px";
+
+
+        item.style.zIndex =
+            "9999";
+
+
+        item.style.pointerEvents =
+            "none";
+
+
+        item.style.transition =
+            "transform 3s linear, opacity 3s";
+
+
+        document.body.appendChild(
+            item
+        );
+
+
+        requestAnimationFrame(() => {
+
+            item.style.transform =
+                `translateY(110vh) rotate(${
+                    Math.random() * 600
+                }deg)`;
+
+
+            item.style.opacity =
+                "0";
+        });
+
+
+        setTimeout(() => {
+
+            item.remove();
+
+        }, 3200);
+    }
+}
