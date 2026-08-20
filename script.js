@@ -1,61 +1,171 @@
 "use strict";
 
+// =====================================================
+// SETTINGS
+// =====================================================
+
 const MAX_PHOTOS = 15;
 
-const $ = (id) => document.getElementById(id);
-
-let selectedFiles = [];
-
-// ===============================
-// PHOTO SELECT
-// ===============================
-
-const fileInput = $("files");
-
-if (fileInput) {
-    fileInput.addEventListener("change", function () {
-
-        selectedFiles = Array.from(this.files)
-            .filter(file => file.type.startsWith("image/"))
-            .slice(0, MAX_PHOTOS);
-
-        if (this.files.length > MAX_PHOTOS) {
-            alert("Maximum 15 photos only 📸");
-        }
-
-        const count = $("photoCount");
-
-        if (count) {
-            count.textContent =
-                `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
-        }
-
-        showThumbnails();
-    });
+function $(id) {
+    return document.getElementById(id);
 }
 
 
-// ===============================
-// THUMBNAILS
-// ===============================
+// =====================================================
+// SAFE BASE64 - SUPPORT EMOJIS / TAMIL / UNICODE
+// =====================================================
+
+function encodeData(data) {
+
+    const json = JSON.stringify(data);
+
+    const bytes = new TextEncoder().encode(json);
+
+    let binary = "";
+
+    bytes.forEach(function (byte) {
+        binary += String.fromCharCode(byte);
+    });
+
+    return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+}
+
+
+function decodeData(encoded) {
+
+    try {
+
+        encoded = encoded
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+
+        while (encoded.length % 4) {
+            encoded += "=";
+        }
+
+        const binary = atob(encoded);
+
+        const bytes = Uint8Array.from(
+            binary,
+            function (char) {
+                return char.charCodeAt(0);
+            }
+        );
+
+        const json =
+            new TextDecoder().decode(bytes);
+
+        return JSON.parse(json);
+
+    } catch (error) {
+
+        console.error(
+            "Data decode error:",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+// =====================================================
+// READ SHARED LINK
+// =====================================================
+
+function getBirthdayData() {
+
+    const hash = window.location.hash;
+
+    if (!hash) {
+        return null;
+    }
+
+    if (!hash.startsWith("#data=")) {
+        return null;
+    }
+
+    const encoded =
+        hash.substring("#data=".length);
+
+    if (!encoded) {
+        return null;
+    }
+
+    return decodeData(encoded);
+}
+
+
+// =====================================================
+// PHOTO SELECTION
+// =====================================================
+
+const fileInput = $("files");
+
+let selectedFiles = [];
+
+if (fileInput) {
+
+    fileInput.addEventListener(
+        "change",
+        function () {
+
+            selectedFiles =
+                Array.from(this.files)
+                    .filter(function (file) {
+                        return file.type.startsWith("image/");
+                    })
+                    .slice(0, MAX_PHOTOS);
+
+            if (this.files.length > MAX_PHOTOS) {
+
+                alert(
+                    "Maximum 15 photos only 📸"
+                );
+            }
+
+            showThumbnails();
+        }
+    );
+}
+
+
+// =====================================================
+// SHOW THUMBNAILS
+// =====================================================
 
 function showThumbnails() {
 
     const thumbs = $("thumbs");
+    const photoCount = $("photoCount");
 
-    if (!thumbs) return;
+    if (!thumbs) {
+        return;
+    }
 
     thumbs.innerHTML = "";
 
-    selectedFiles.forEach(file => {
+    if (photoCount) {
 
-        const reader = new FileReader();
+        photoCount.textContent =
+            `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
+    }
+
+    selectedFiles.forEach(function (file) {
+
+        const reader =
+            new FileReader();
 
         reader.onload = function () {
 
-            const img = document.createElement("img");
+            const img =
+                document.createElement("img");
 
             img.src = reader.result;
+
             img.alt = "Selected photo";
 
             thumbs.appendChild(img);
@@ -66,148 +176,231 @@ function showThumbnails() {
 }
 
 
-// ===============================
-// FILE TO BASE64
-// ===============================
+// =====================================================
+// FILE → BASE64
+// =====================================================
 
 function fileToBase64(file) {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function (resolve, reject) {
 
-        const reader = new FileReader();
+        const reader =
+            new FileReader();
 
-        reader.onload = () => resolve(reader.result);
+        reader.onload = function () {
+            resolve(reader.result);
+        };
 
-        reader.onerror = () =>
-            reject(new Error("Unable to read photo"));
+        reader.onerror = function () {
+
+            reject(
+                new Error(
+                    "Unable to read image"
+                )
+            );
+        };
 
         reader.readAsDataURL(file);
     });
 }
 
 
-// ===============================
+// =====================================================
 // CREATE SURPRISE
-// ===============================
+// =====================================================
 
 const createButton = $("create");
 
 if (createButton) {
 
-    createButton.addEventListener("click", async function () {
+    createButton.addEventListener(
+        "click",
+        async function () {
 
-        const nameInput = $("name");
-        const passwordInput = $("pass");
-        const wishInput = $("wish");
+            const nameInput = $("name");
+            const passwordInput = $("pass");
+            const wishInput = $("wish");
 
-        const name = nameInput.value.trim();
-        const password = passwordInput.value;
+            const name =
+                nameInput.value.trim();
 
-        const wish =
-            wishInput.value.trim() ||
-            "Wishing you a very happy birthday! 🎂❤️";
+            const password =
+                passwordInput.value;
 
-
-        if (!name) {
-            alert("Please enter the name 💗");
-            nameInput.focus();
-            return;
-        }
-
-        if (!password) {
-            alert("Please create a password 🔐");
-            passwordInput.focus();
-            return;
-        }
+            const wish =
+                wishInput.value.trim() ||
+                "Wishing you a very happy birthday! 🎂❤️";
 
 
-        createButton.disabled = true;
-        createButton.textContent = "Creating surprise... ⏳";
+            // -----------------------------
+            // VALIDATION
+            // -----------------------------
 
+            if (!name) {
 
-        try {
+                alert(
+                    "Please enter the name 💗"
+                );
 
-            const photos = [];
+                nameInput.focus();
 
-            for (let i = 0; i < selectedFiles.length; i++) {
-
-                createButton.textContent =
-                    `Preparing photo ${i + 1}/${selectedFiles.length}... 📸`;
-
-                const photo =
-                    await fileToBase64(selectedFiles[i]);
-
-                photos.push(photo);
+                return;
             }
 
 
-            const birthdayData = {
-                name: name,
-                password: password,
-                wish: wish,
-                photos: photos
-            };
+            if (!password) {
+
+                alert(
+                    "Please create a password 🔐"
+                );
+
+                passwordInput.focus();
+
+                return;
+            }
 
 
-            const json =
-                JSON.stringify(birthdayData);
+            if (selectedFiles.length === 0) {
+
+                alert(
+                    "Please select at least one photo 📸"
+                );
+
+                return;
+            }
 
 
-            const encodedData =
-                btoa(
-                    encodeURIComponent(json)
+            // -----------------------------
+            // DISABLE BUTTON
+            // -----------------------------
+
+            createButton.disabled = true;
+
+            createButton.textContent =
+                "Preparing surprise... ⏳";
+
+
+            try {
+
+                // -----------------------------
+                // CONVERT PHOTOS
+                // -----------------------------
+
+                const photoData = [];
+
+                for (
+                    let i = 0;
+                    i < selectedFiles.length;
+                    i++
+                ) {
+
+                    createButton.textContent =
+                        `Preparing photo ${i + 1}/${selectedFiles.length}... 📸`;
+
+                    const base64 =
+                        await fileToBase64(
+                            selectedFiles[i]
+                        );
+
+                    photoData.push(base64);
+                }
+
+
+                // -----------------------------
+                // CREATE OBJECT
+                // -----------------------------
+
+                const birthdayData = {
+
+                    name: name,
+
+                    password: password,
+
+                    wish: wish,
+
+                    photos: photoData
+                };
+
+
+                // -----------------------------
+                // ENCODE
+                // -----------------------------
+
+                const encodedData =
+                    encodeData(
+                        birthdayData
+                    );
+
+
+                // -----------------------------
+                // CREATE SHARE LINK
+                // -----------------------------
+
+                const baseURL =
+                    window.location.href
+                        .split("#")[0];
+
+
+                const shareLink =
+                    baseURL +
+                    "#data=" +
+                    encodedData;
+
+
+                // -----------------------------
+                // SHOW LINK
+                // -----------------------------
+
+                const linkInput = $("link");
+                const result = $("result");
+
+                if (linkInput) {
+
+                    linkInput.value =
+                        shareLink;
+                }
+
+
+                if (result) {
+
+                    result.classList.remove(
+                        "hidden"
+                    );
+
+                    result.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+                }
+
+
+                createButton.textContent =
+                    "Surprise Created ❤️";
+
+
+                console.log(
+                    "Surprise link:",
+                    shareLink
                 );
 
 
-            const baseURL =
-                window.location.href
-                    .split("#")[0];
+            } catch (error) {
 
+                console.error(error);
 
-            const shareLink =
-                baseURL + "#data=" + encodedData;
+                alert(
+                    "Something went wrong 😭\n\n" +
+                    error.message
+                );
 
-
-            const linkInput = $("link");
-            const result = $("result");
-
-
-            if (linkInput) {
-                linkInput.value = shareLink;
+                createButton.textContent =
+                    "Create Surprise 💗";
             }
 
 
-            if (result) {
-
-                result.classList.remove("hidden");
-
-                result.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-            }
-
-
-            createButton.textContent =
-                "Surprise Created ❤️";
-
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(
-                "Link create panna mudiyala 😭\n\n" +
-                error.message
-            );
-
-            createButton.textContent =
-                "Create Surprise 💗";
+            createButton.disabled = false;
         }
-
-
-        createButton.disabled = false;
-    });
+    );
 }
 
 
@@ -215,165 +408,136 @@ if (createButton) {
 // COPY LINK - MOBILE + LAPTOP
 // =====================================================
 
-const copyButton = document.getElementById("copy");
+const copyButton = $("copy");
 
 if (copyButton) {
 
-    copyButton.addEventListener("click", function () {
+    copyButton.addEventListener(
+        "click",
+        async function () {
 
-        const linkInput = document.getElementById("link");
+            const linkInput = $("link");
 
-        if (!linkInput || !linkInput.value) {
-            alert("First create the surprise link ❤️");
-            return;
-        }
+            if (
+                !linkInput ||
+                !linkInput.value
+            ) {
 
-        const text = linkInput.value.trim();
+                alert(
+                    "First create the surprise link ❤️"
+                );
 
-        // Select the link
-        linkInput.focus();
-        linkInput.select();
-        linkInput.setSelectionRange(0, text.length);
-
-        // Method 1: Modern Clipboard
-        if (navigator.clipboard && window.isSecureContext) {
-
-            navigator.clipboard.writeText(text)
-                .then(function () {
-
-                    copyButton.textContent = "Copied! ❤️";
-
-                    setTimeout(function () {
-                        copyButton.textContent =
-                            "Copy Surprise Link ❤️";
-                    }, 2000);
-
-                })
-                .catch(function () {
-
-                    // Mobile fallback
-                    fallbackCopy(text);
-                });
-
-        } else {
-
-            // Mobile fallback
-            fallbackCopy(text);
-        }
-    });
-}
+                return;
+            }
 
 
-// =====================================================
-// FALLBACK COPY - MOBILE
-// =====================================================
-
-function fallbackCopy(text) {
-
-    const temp = document.createElement("textarea");
-
-    temp.value = text;
-
-    temp.style.position = "fixed";
-    temp.style.left = "-9999px";
-    temp.style.top = "0";
-
-    document.body.appendChild(temp);
-
-    temp.focus();
-    temp.select();
-    temp.setSelectionRange(0, temp.value.length);
-
-    let copied = false;
-
-    try {
-        copied = document.execCommand("copy");
-    } catch (error) {
-        copied = false;
-    }
-
-    document.body.removeChild(temp);
-
-    if (copied) {
-
-        const copyButton = document.getElementById("copy");
-
-        copyButton.textContent = "Copied! ❤️";
-
-        setTimeout(function () {
-            copyButton.textContent =
-                "Copy Surprise Link ❤️";
-        }, 2000);
-
-    } else {
-
-        // If mobile browser blocks copying,
-        // select the link so user can long-press Copy.
-        const linkInput = document.getElementById("link");
-
-        linkInput.focus();
-        linkInput.select();
-        linkInput.setSelectionRange(
-            0,
-            linkInput.value.length
-        );
-
-        alert(
-            "Link selected ❤️\n\n" +
-            "Long press the selected link → Copy"
-        );
-    }
-}
-
-// ===============================
-// READ SHARED LINK
-// ===============================
-
-function getBirthdayData() {
-
-    const hash =
-        window.location.hash;
+            const text =
+                linkInput.value.trim();
 
 
-    if (!hash.startsWith("#data=")) {
-        return null;
-    }
+            // -----------------------------
+            // MODERN CLIPBOARD
+            // -----------------------------
+
+            try {
+
+                if (
+                    navigator.clipboard &&
+                    window.isSecureContext
+                ) {
+
+                    await navigator.clipboard
+                        .writeText(text);
+
+                    copyButton.textContent =
+                        "Copied! ❤️";
+
+                    setTimeout(
+                        function () {
+
+                            copyButton.textContent =
+                                "Copy Surprise Link ❤️";
+
+                        },
+                        2000
+                    );
+
+                    return;
+                }
+
+            } catch (error) {
+
+                console.log(
+                    "Clipboard API failed:",
+                    error
+                );
+            }
 
 
-    try {
+            // -----------------------------
+            // MOBILE FALLBACK
+            // -----------------------------
 
-        const encoded =
-            hash.substring(6);
+            linkInput.focus();
 
+            linkInput.select();
 
-        const json =
-            decodeURIComponent(
-                atob(encoded)
+            linkInput.setSelectionRange(
+                0,
+                linkInput.value.length
             );
 
 
-        return JSON.parse(json);
+            try {
+
+                const success =
+                    document.execCommand(
+                        "copy"
+                    );
+
+                if (success) {
+
+                    copyButton.textContent =
+                        "Copied! ❤️";
+
+                    setTimeout(
+                        function () {
+
+                            copyButton.textContent =
+                                "Copy Surprise Link ❤️";
+
+                        },
+                        2000
+                    );
+
+                    return;
+                }
+
+            } catch (error) {
+
+                console.log(
+                    "Fallback copy failed:",
+                    error
+                );
+            }
 
 
-    } catch (error) {
-
-        console.error(
-            "Invalid birthday data:",
-            error
-        );
-
-        return null;
-    }
+            alert(
+                "Link selected ❤️\n\n" +
+                "Long press the link → Copy"
+            );
+        }
+    );
 }
 
+
+// =====================================================
+// OPEN SHARED SURPRISE
+// =====================================================
 
 const birthdayData =
     getBirthdayData();
 
-
-// ===============================
-// SHOW PASSWORD PAGE
-// ===============================
 
 if (birthdayData) {
 
@@ -382,16 +546,25 @@ if (birthdayData) {
     const lockedName = $("lockedName");
 
 
+    // Hide create page
     if (creator) {
-        creator.classList.add("hidden");
+
+        creator.classList.add(
+            "hidden"
+        );
     }
 
 
+    // Show password page
     if (locked) {
-        locked.classList.remove("hidden");
+
+        locked.classList.remove(
+            "hidden"
+        );
     }
 
 
+    // Show recipient name
     if (lockedName) {
 
         lockedName.textContent =
@@ -401,142 +574,151 @@ if (birthdayData) {
 }
 
 
-// ===============================
+// =====================================================
 // OPEN SURPRISE
-// ===============================
+// =====================================================
 
 const openButton = $("open");
 
 if (openButton) {
 
-    openButton.addEventListener("click", async function () {
+    openButton.addEventListener(
+        "click",
+        async function () {
 
-        if (!birthdayData) {
+            if (!birthdayData) {
 
-            alert(
-                "Birthday surprise not found 😭"
-            );
+                alert(
+                    "Birthday surprise not found 😭"
+                );
 
-            return;
-        }
-
-
-        const unlockInput =
-            $("unlock");
-
-        const enteredPassword =
-            unlockInput.value;
-
-
-        if (
-            enteredPassword !==
-            birthdayData.password
-        ) {
-
-            const wrong =
-                $("wrong");
-
-            if (wrong) {
-
-                wrong.textContent =
-                    "Wrong password 😭 Try again.";
+                return;
             }
 
-            unlockInput.focus();
 
-            return;
-        }
+            const unlockInput =
+                $("unlock");
 
-
-        const wrong =
-            $("wrong");
-
-        if (wrong) {
-            wrong.textContent = "";
-        }
+            const enteredPassword =
+                unlockInput.value;
 
 
-        const locked =
-            $("locked");
+            // -----------------------------
+            // CHECK PASSWORD
+            // -----------------------------
 
-        const surprise =
-            $("surprise");
+            if (
+                enteredPassword !==
+                birthdayData.password
+            ) {
+
+                $("wrong").textContent =
+                    "Wrong password 😭 Try again.";
+
+                unlockInput.focus();
+
+                return;
+            }
 
 
-        if (locked) {
-            locked.classList.add("hidden");
-        }
+            $("wrong").textContent = "";
 
 
-        if (surprise) {
-            surprise.classList.remove("hidden");
-        }
+            // -----------------------------
+            // HIDE LOCK
+            // -----------------------------
+
+            $("locked").classList.add(
+                "hidden"
+            );
 
 
-        const sname =
-            $("sname");
+            // -----------------------------
+            // SHOW SURPRISE
+            // -----------------------------
 
-        if (sname) {
+            $("surprise").classList.remove(
+                "hidden"
+            );
 
-            sname.textContent =
+
+            // -----------------------------
+            // NAME
+            // -----------------------------
+
+            $("sname").textContent =
                 birthdayData.name ||
                 "You";
-        }
 
 
-        const swish =
-            $("swish");
+            // -----------------------------
+            // MESSAGE
+            // -----------------------------
 
-        if (swish) {
-
-            swish.textContent =
+            $("swish").textContent =
                 birthdayData.wish || "";
+
+
+            // -----------------------------
+            // PHOTOS
+            // -----------------------------
+
+            createGallery(
+                birthdayData.photos || []
+            );
+
+
+            // -----------------------------
+            // CONFETTI
+            // -----------------------------
+
+            startConfetti();
+
+
+            // -----------------------------
+            // MUSIC
+            // -----------------------------
+
+            await startMusic();
         }
-
-
-        createGallery(
-            birthdayData.photos || []
-        );
-
-
-        startConfetti();
-
-        await startMusic();
-    });
+    );
 }
 
 
-// ===============================
-// ENTER KEY
-// ===============================
+// =====================================================
+// ENTER KEY FOR PASSWORD
+// =====================================================
 
 const unlockInput = $("unlock");
 
 if (unlockInput) {
 
-    unlockInput.addEventListener("keydown", function (event) {
+    unlockInput.addEventListener(
+        "keydown",
+        function (event) {
 
-        if (event.key === "Enter") {
+            if (event.key === "Enter") {
 
-            event.preventDefault();
+                event.preventDefault();
 
-            if ($("open")) {
                 $("open").click();
             }
         }
-    });
+    );
 }
 
 
-// ===============================
-// GALLERY
-// ===============================
+// =====================================================
+// PHOTO GALLERY
+// =====================================================
 
 function createGallery(images) {
 
     const gallery = $("gallery");
 
-    if (!gallery) return;
+    if (!gallery) {
+        return;
+    }
 
     gallery.innerHTML = "";
 
@@ -552,50 +734,59 @@ function createGallery(images) {
 
     images
         .slice(0, MAX_PHOTOS)
-        .forEach((src, index) => {
+        .forEach(
+            function (src, index) {
 
-            const card =
-                document.createElement("div");
+                const card =
+                    document.createElement(
+                        "div"
+                    );
 
-            card.className =
-                "photo-card";
-
-
-            card.style.setProperty(
-                "--rotation",
-                rotations[
-                    index % rotations.length
-                ]
-            );
+                card.className =
+                    "photo-card";
 
 
-            const image =
-                document.createElement("img");
-
-            image.src = src;
-
-            image.alt =
-                `Birthday memory ${index + 1}`;
-
-            image.loading = "lazy";
-
-            image.decoding = "async";
+                card.style.setProperty(
+                    "--rotation",
+                    rotations[
+                        index %
+                        rotations.length
+                    ]
+                );
 
 
-            card.appendChild(image);
+                const image =
+                    document.createElement(
+                        "img"
+                    );
 
-            gallery.appendChild(card);
-        });
+                image.src = src;
+
+                image.alt =
+                    `Birthday memory ${index + 1}`;
+
+                image.loading = "lazy";
+
+
+                card.appendChild(image);
+
+                gallery.appendChild(card);
+            }
+        );
 }
 
 
-// ===============================
+// =====================================================
 // MUSIC
-// ===============================
+// =====================================================
 
 const music = $("bgMusic");
-const musicButton = $("musicBtn");
-const musicStatus = $("musicStatus");
+
+const musicButton =
+    $("musicBtn");
+
+const musicStatus =
+    $("musicStatus");
 
 
 async function startMusic() {
@@ -628,8 +819,13 @@ async function startMusic() {
 
         return true;
 
-
     } catch (error) {
+
+        console.log(
+            "Autoplay blocked:",
+            error
+        );
+
 
         if (musicButton) {
 
@@ -650,11 +846,10 @@ async function startMusic() {
 }
 
 
-// ===============================
-// MUSIC BUTTON
-// ===============================
-
-if (musicButton && music) {
+if (
+    musicButton &&
+    music
+) {
 
     musicButton.addEventListener(
         "click",
@@ -683,9 +878,9 @@ if (musicButton && music) {
 }
 
 
-// ===============================
+// =====================================================
 // CONFETTI
-// ===============================
+// =====================================================
 
 function startConfetti() {
 
@@ -701,10 +896,16 @@ function startConfetti() {
     ];
 
 
-    for (let i = 0; i < 40; i++) {
+    for (
+        let i = 0;
+        i < 40;
+        i++
+    ) {
 
         const item =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
 
         item.textContent =
@@ -716,42 +917,61 @@ function startConfetti() {
             ];
 
 
-        item.style.position = "fixed";
+        item.style.position =
+            "fixed";
 
         item.style.left =
             Math.random() * 100 + "vw";
 
-        item.style.top = "-40px";
+        item.style.top =
+            "-40px";
 
         item.style.fontSize =
-            18 + Math.random() * 20 + "px";
+            18 +
+            Math.random() * 20 +
+            "px";
 
-        item.style.zIndex = "9999";
+        item.style.zIndex =
+            "9999";
 
-        item.style.pointerEvents = "none";
+        item.style.pointerEvents =
+            "none";
 
         item.style.transition =
             "transform 3s linear, opacity 3s";
 
 
-        document.body.appendChild(item);
+        document.body.appendChild(
+            item
+        );
 
 
-        requestAnimationFrame(() => {
+        requestAnimationFrame(
+            function () {
 
-            item.style.transform =
-                `translateY(110vh) rotate(${
-                    Math.random() * 600
-                }deg)`;
+                item.style.transform =
+                    `translateY(110vh) rotate(${
+                        Math.random() * 600
+                    }deg)`;
 
-            item.style.opacity = "0";
-        });
+                item.style.opacity =
+                    "0";
+            }
+        );
 
 
-        setTimeout(() => {
+        setTimeout(
+            function () {
 
-            item.remove();
+                item.remove();
 
-        }, 3200);
+            },
+            3200
+        );
     }
 }
+
+
+// =====================================================
+// FINISHED ❤️
+// =====================================================
