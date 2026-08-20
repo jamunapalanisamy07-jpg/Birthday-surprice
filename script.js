@@ -1,6 +1,6 @@
 "use strict";
 
-const MAX_PHOTOS = 20;
+const MAX_PHOTOS = 15;
 
 const $ = (id) => document.getElementById(id);
 
