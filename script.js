@@ -1,1471 +1,640 @@
 "use strict";
 
-/*
-=========================================================
- FIREBASE IMPORTS
-=========================================================
-*/
+const MAX_PHOTOS = 20;
 
-import {
-  initializeApp
-} from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getAuth,
-  signInAnonymously
-} from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  doc,
-  getDoc,
-  serverTimestamp
-} from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+const $ = (id) => document.getElementById(id);
 
 
-/*
-=========================================================
- FIREBASE CONFIG
+// =====================================================
+// GET DATA FROM URL
+// =====================================================
 
- IMPORTANT:
- Replace these with YOUR Firebase Web App config.
-=========================================================
-*/
+function getBirthdayData() {
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get("data");
 
-const firebaseConfig = {
+    if (!data) return null;
 
-  apiKey:
-    "PASTE_YOUR_API_KEY_HERE",
-
-  authDomain:
-    "PASTE_YOUR_PROJECT.firebaseapp.com",
-
-  projectId:
-    "PASTE_YOUR_PROJECT_ID_HERE",
-
-  storageBucket:
-    "PASTE_YOUR_STORAGE_BUCKET_HERE",
-
-  messagingSenderId:
-    "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
-
-  appId:
-    "PASTE_YOUR_APP_ID_HERE"
-
-};
+    try {
+        return JSON.parse(decodeURIComponent(data));
+    } catch (error) {
+        console.error("Invalid birthday data:", error);
+        return null;
+    }
+}
 
 
-/*
-=========================================================
- FIREBASE INITIALIZE
-=========================================================
-*/
+// =====================================================
+// CREATE PAGE
+// =====================================================
 
-const app =
-  initializeApp(
-    firebaseConfig
-  );
-
-
-const auth =
-  getAuth(app);
-
-
-const db =
-  getFirestore(app);
-
-
-const storage =
-  getStorage(app);
-
-
-/*
-=========================================================
- HELPER
-=========================================================
-*/
-
-const $ =
-  (id) =>
-    document.getElementById(id);
-
-
-/*
-=========================================================
- SETTINGS
-=========================================================
-*/
-
-const MAX_PHOTOS = 15;
+const createButton = $("create");
+const fileInput = $("files");
 
 let selectedFiles = [];
 
 
-/*
-=========================================================
- FIREBASE LOGIN
-=========================================================
-*/
-
-let firebaseReady =
-  false;
-
-
-async function initializeFirebase() {
-
-  try {
-
-    await signInAnonymously(
-      auth
-    );
-
-    firebaseReady = true;
-
-    console.log(
-      "Firebase ready ❤️"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Firebase authentication error:",
-      error
-    );
-
-    alert(
-      "Firebase setup problem. Please check Anonymous Authentication."
-    );
-
-  }
-
-}
-
-
-await initializeFirebase();
-
-
-/*
-=========================================================
- IMAGE COMPRESSION
-=========================================================
-*/
-
-function compressImage(file) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const reader =
-        new FileReader();
-
-
-      reader.onload =
-        function () {
-
-          const image =
-            new Image();
-
-
-          image.onload =
-            function () {
-
-              let width =
-                image.naturalWidth;
-
-              let height =
-                image.naturalHeight;
-
-
-              /*
-                Keep good quality while
-                reducing upload size.
-              */
-
-              const MAX_SIZE =
-                1400;
-
-
-              if (
-                Math.max(
-                  width,
-                  height
-                ) > MAX_SIZE
-              ) {
-
-                if (
-                  width >
-                  height
-                ) {
-
-                  height =
-                    Math.round(
-                      height *
-                      MAX_SIZE /
-                      width
-                    );
-
-                  width =
-                    MAX_SIZE;
-
-                } else {
-
-                  width =
-                    Math.round(
-                      width *
-                      MAX_SIZE /
-                      height
-                    );
-
-                  height =
-                    MAX_SIZE;
-
-                }
-
-              }
-
-
-              const canvas =
-                document.createElement(
-                  "canvas"
-                );
-
-
-              canvas.width =
-                width;
-
-              canvas.height =
-                height;
-
-
-              const context =
-                canvas.getContext(
-                  "2d"
-                );
-
-
-              context.drawImage(
-                image,
-                0,
-                0,
-                width,
-                height
-              );
-
-
-              canvas.toBlob(
-                function (blob) {
-
-                  if (!blob) {
-
-                    reject(
-                      new Error(
-                        "Image compression failed"
-                      )
-                    );
-
-                    return;
-                  }
-
-
-                  resolve(
-                    blob
-                  );
-
-                },
-                "image/jpeg",
-                0.78
-              );
-
-            };
-
-
-          image.onerror =
-            function () {
-
-              reject(
-                new Error(
-                  "Could not load image"
-                )
-              );
-
-            };
-
-
-          image.src =
-            reader.result;
-
-        };
-
-
-      reader.onerror =
-        function () {
-
-          reject(
-            new Error(
-              "Could not read image"
-            )
-          );
-
-        };
-
-
-      reader.readAsDataURL(
-        file
-      );
-
-    }
-  );
-
-}
-
-
-/*
-=========================================================
- PHOTO SELECT
-=========================================================
-*/
-
-const fileInput =
-  $("files");
-
-
+// Photo selection
 if (fileInput) {
 
-  fileInput.addEventListener(
-    "change",
-    function () {
+    fileInput.addEventListener("change", function () {
 
-      selectedFiles =
-        Array.from(
-          this.files
-        ).filter(
-          file =>
-            file.type.startsWith(
-              "image/"
-            )
-        ).slice(
-          0,
-          MAX_PHOTOS
-        );
+        selectedFiles = Array.from(this.files)
+            .filter(file => file.type.startsWith("image/"))
+            .slice(0, MAX_PHOTOS);
 
+        if (this.files.length > MAX_PHOTOS) {
+            alert("Maximum 20 photos only 📸");
+        }
 
-      if (
-        this.files.length >
-        MAX_PHOTOS
-      ) {
-
-        alert(
-          "Maximum 15 photos only 📸"
-        );
-
-      }
-
-
-      showThumbnails();
-
-    }
-  );
-
+        showThumbnails();
+    });
 }
 
 
-/*
-=========================================================
- SHOW THUMBNAILS
-=========================================================
-*/
+// =====================================================
+// SHOW PHOTO THUMBNAILS
+// =====================================================
 
 function showThumbnails() {
 
-  const thumbs =
-    $("thumbs");
+    const thumbs = $("thumbs");
+    const photoCount = $("photoCount");
 
+    if (!thumbs) return;
 
-  if (!thumbs) {
-    return;
-  }
+    thumbs.innerHTML = "";
 
+    if (photoCount) {
+        photoCount.textContent =
+            `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
+    }
 
-  thumbs.innerHTML =
-    "";
+    selectedFiles.forEach(file => {
 
+        const reader = new FileReader();
 
-  if ($("photoCount")) {
+        reader.onload = function () {
 
-    $("photoCount")
-      .textContent =
-      `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
+            const img = document.createElement("img");
 
-  }
+            img.src = reader.result;
+            img.alt = "Selected photo";
 
-
-  selectedFiles.forEach(
-    function (file) {
-
-      const reader =
-        new FileReader();
-
-
-      reader.onload =
-        function () {
-
-          const img =
-            document.createElement(
-              "img"
-            );
-
-
-          img.src =
-            reader.result;
-
-
-          img.alt =
-            "Selected photo";
-
-
-          thumbs.appendChild(
-            img
-          );
-
+            thumbs.appendChild(img);
         };
 
-
-      reader.readAsDataURL(
-        file
-      );
-
-    }
-  );
-
+        reader.readAsDataURL(file);
+    });
 }
 
 
-/*
-=========================================================
- UPLOAD ONE PHOTO
-=========================================================
-*/
+// =====================================================
+// IMAGE TO BASE64
+// =====================================================
 
-async function uploadPhoto(
-  file,
-  surpriseId,
-  index
-) {
+function fileToBase64(file) {
 
-  const compressed =
-    await compressImage(
-      file
-    );
+    return new Promise((resolve, reject) => {
 
+        const reader = new FileReader();
 
-  const fileName =
-    `photo-${index + 1}.jpg`;
+        reader.onload = () => resolve(reader.result);
 
+        reader.onerror = () =>
+            reject(new Error("Unable to read image"));
 
-  const storagePath =
-    `surprises/${surpriseId}/${fileName}`;
-
-
-  const storageReference =
-    ref(
-      storage,
-      storagePath
-    );
-
-
-  await uploadBytes(
-    storageReference,
-    compressed,
-    {
-      contentType:
-        "image/jpeg"
-    }
-  );
-
-
-  const downloadURL =
-    await getDownloadURL(
-      storageReference
-    );
-
-
-  return downloadURL;
-
+        reader.readAsDataURL(file);
+    });
 }
 
 
-/*
-=========================================================
- CREATE SURPRISE
-=========================================================
-*/
-
-const createButton =
-  $("create");
-
+// =====================================================
+// CREATE SURPRISE
+// =====================================================
 
 if (createButton) {
 
-  createButton.addEventListener(
-    "click",
-    async function () {
+    createButton.addEventListener("click", async function () {
 
-      if (!firebaseReady) {
+        const nameInput = $("name");
+        const passwordInput = $("pass");
+        const wishInput = $("wish");
 
-        alert(
-          "Firebase is still loading. Please try again."
-        );
-
-        return;
-      }
-
-
-      const name =
-        $("name")
-          .value
-          .trim();
+        const name = nameInput.value.trim();
+        const password = passwordInput.value;
+        const wish =
+            wishInput.value.trim() ||
+            "Wishing you a very happy birthday! 🎂❤️";
 
 
-      const password =
-        $("pass")
-          .value;
+        // Validation
+        if (!name) {
+            alert("Please enter the name 💗");
+            nameInput.focus();
+            return;
+        }
 
+        if (!password) {
+            alert("Please create a password 🔐");
+            passwordInput.focus();
+            return;
+        }
 
-      const wish =
-        $("wish")
-          .value
-          .trim()
-        ||
-        "Wishing you a very happy birthday! 🎂❤️";
-
-
-      /*
-        VALIDATION
-      */
-
-      if (!name) {
-
-        alert(
-          "Please enter the name 💗"
-        );
-
-        $("name").focus();
-
-        return;
-      }
-
-
-      if (!password) {
-
-        alert(
-          "Please create a password 🔐"
-        );
-
-        $("pass").focus();
-
-        return;
-      }
-
-
-      if (
-        selectedFiles.length === 0
-      ) {
-
-        alert(
-          "Please select at least one photo 📸"
-        );
-
-        return;
-      }
-
-
-      /*
-        BUTTON STATE
-      */
-
-      createButton.disabled =
-        true;
-
-      createButton.textContent =
-        "Creating surprise... ⏳";
-
-
-      try {
-
-        /*
-          STEP 1:
-          Create Firestore document first.
-        */
-
-        const surpriseRef =
-          await addDoc(
-            collection(
-              db,
-              "surprises"
-            ),
-            {
-              name:
-                name,
-
-              password:
-                password,
-
-              wish:
-                wish,
-
-              photos:
-                [],
-
-              createdAt:
-                serverTimestamp()
-            }
-          );
-
-
-        const surpriseId =
-          surpriseRef.id;
-
-
-        /*
-          STEP 2:
-          Upload photos.
-
-          IMPORTANT:
-          Photos are NOT placed
-          inside the URL.
-        */
-
-        const photoURLs =
-          [];
-
-
-        for (
-          let i = 0;
-          i < selectedFiles.length;
-          i++
-        ) {
-
-          createButton.textContent =
-            `Uploading photo ${i + 1}/${selectedFiles.length}... 📸`;
-
-
-          const url =
-            await uploadPhoto(
-              selectedFiles[i],
-              surpriseId,
-              i
-            );
-
-
-          photoURLs.push(
-            url
-          );
-
+        if (selectedFiles.length === 0) {
+            alert("Please select at least one photo 📸");
+            return;
         }
 
 
-        /*
-          STEP 3:
-          Save photo URLs in
-          Firestore.
-        */
+        createButton.disabled = true;
+        createButton.textContent = "Preparing surprise... ⏳";
 
-        await import(
-          "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
-        ).then(
-          async ({
-            updateDoc
-          }) => {
 
-            await updateDoc(
-              doc(
-                db,
-                "surprises",
-                surpriseId
-              ),
-              {
-                photos:
-                  photoURLs
-              }
+        try {
+
+            // Convert photos to Base64
+            const photoData = [];
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+
+                createButton.textContent =
+                    `Preparing photo ${i + 1}/${selectedFiles.length}... 📸`;
+
+                const base64 =
+                    await fileToBase64(selectedFiles[i]);
+
+                photoData.push(base64);
+            }
+
+
+            // Birthday object
+            const birthdayData = {
+
+                name: name,
+
+                password: password,
+
+                wish: wish,
+
+                photos: photoData
+            };
+
+
+            // Convert object to URL-safe data
+            const encodedData =
+                encodeURIComponent(
+                    JSON.stringify(birthdayData)
+                );
+
+
+            // Create share link
+            const baseURL =
+                window.location.href
+                    .split("?")[0]
+                    .split("#")[0];
+
+
+            const shareLink =
+                `${baseURL}?data=${encodedData}`;
+
+
+            // Show link
+            const linkInput = $("link");
+            const result = $("result");
+
+            if (linkInput) {
+                linkInput.value = shareLink;
+            }
+
+            if (result) {
+                result.classList.remove("hidden");
+
+                result.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+
+
+            createButton.textContent =
+                "Surprise Created ❤️";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                "Something went wrong 😭\n\n" +
+                error.message
             );
 
-          }
-        );
+            createButton.textContent =
+                "Create Surprise 💗";
 
+        }
 
-        /*
-          STEP 4:
-          Create SHORT URL.
+        createButton.disabled = false;
 
-          Only Firebase document ID
-          goes into the URL.
-        */
-
-        const baseURL =
-          window.location.href
-            .split("?")[0]
-            .split("#")[0];
-
-
-        const shareLink =
-          `${baseURL}?id=${encodeURIComponent(
-            surpriseId
-          )}`;
-
-
-        $("link").value =
-          shareLink;
-
-
-        $("result")
-          .classList
-          .remove("hidden");
-
-
-        $("result")
-          .scrollIntoView({
-            behavior:
-              "smooth",
-
-            block:
-              "center"
-          });
-
-
-        createButton.textContent =
-          "Surprise Created ❤️";
-
-
-      } catch (error) {
-
-        console.error(
-          "Create surprise error:",
-          error
-        );
-
-
-        alert(
-          "Something went wrong 😭\n\n" +
-          error.message
-        );
-
-
-        createButton.textContent =
-          "Create Surprise 💗";
-
-      }
-
-
-      createButton.disabled =
-        false;
-
-    }
-  );
-
+    });
 }
 
 
-/*
-=========================================================
- COPY LINK
-=========================================================
-*/
+// =====================================================
+// COPY LINK
+// =====================================================
 
-const copyButton =
-  $("copy");
-
+const copyButton = $("copy");
 
 if (copyButton) {
 
-  copyButton.addEventListener(
-    "click",
-    async function () {
+    copyButton.addEventListener("click", async function () {
 
-      const link =
-        $("link").value;
+        const linkInput = $("link");
 
-
-      if (!link) {
-        return;
-      }
+        if (!linkInput || !linkInput.value) {
+            alert("No link available ❤️");
+            return;
+        }
 
 
-      try {
+        try {
 
-        await navigator.clipboard
-          .writeText(
-            link
-          );
+            await navigator.clipboard.writeText(
+                linkInput.value
+            );
 
+            this.textContent = "Copied! ❤️";
 
-        this.textContent =
-          "Copied! ❤️";
+            setTimeout(() => {
 
+                this.textContent =
+                    "Copy Surprise Link ❤️";
 
-        setTimeout(
-          () => {
-
-            this.textContent =
-              "Copy Surprise Link ❤️";
-
-          },
-          2000
-        );
+            }, 2000);
 
 
-      } catch (error) {
+        } catch (error) {
 
-        /*
-          Mobile fallback
-        */
+            linkInput.focus();
+            linkInput.select();
 
-        $("link").focus();
+            linkInput.setSelectionRange(
+                0,
+                linkInput.value.length
+            );
 
-        $("link").select();
+            alert(
+                "Link selected. Copy it manually 📋"
+            );
+        }
 
-        $("link").setSelectionRange(
-          0,
-          $("link").value.length
-        );
-
-
-        this.textContent =
-          "Long press to copy 📋";
-
-      }
-
-    }
-  );
-
+    });
 }
 
 
-/*
-=========================================================
- GET ID FROM URL
-=========================================================
-*/
+// =====================================================
+// OPEN SHARED SURPRISE
+// =====================================================
 
-function getSurpriseId() {
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
+const birthdayData = getBirthdayData();
 
 
-  return params.get(
-    "id"
-  );
+if (birthdayData) {
 
-}
-
-
-const surpriseId =
-  getSurpriseId();
+    const creator = $("creator");
+    const locked = $("locked");
+    const lockedName = $("lockedName");
 
 
-/*
-=========================================================
- LOAD SURPRISE FROM FIRESTORE
-=========================================================
-*/
-
-let surpriseData =
-  null;
-
-
-async function loadSurprise() {
-
-  if (!surpriseId) {
-
-    return;
-
-  }
-
-
-  try {
-
-    const surpriseRef =
-      doc(
-        db,
-        "surprises",
-        surpriseId
-      );
-
-
-    const snapshot =
-      await getDoc(
-        surpriseRef
-      );
-
-
-    if (!snapshot.exists()) {
-
-      alert(
-        "Surprise link not found 😭"
-      );
-
-      return;
-
+    if (creator) {
+        creator.classList.add("hidden");
     }
 
 
-    surpriseData =
-      snapshot.data();
+    if (locked) {
+        locked.classList.remove("hidden");
+    }
 
 
-    /*
-      Show lock page
-    */
-
-    $("creator")
-      ?.classList
-      .add("hidden");
-
-
-    $("locked")
-      ?.classList
-      .remove("hidden");
-
-
-    $("lockedName")
-      .textContent =
-      surpriseData.name ||
-      "Someone Special";
-
-
-  } catch (error) {
-
-    console.error(
-      "Load surprise error:",
-      error
-    );
-
-
-    alert(
-      "Unable to load this surprise 😭"
-    );
-
-  }
-
+    if (lockedName) {
+        lockedName.textContent =
+            birthdayData.name || "Someone Special";
+    }
 }
 
 
-/*
-=========================================================
- PASSWORD OPEN
-=========================================================
-*/
+// =====================================================
+// PASSWORD OPEN
+// =====================================================
 
-const openButton =
-  $("open");
-
+const openButton = $("open");
 
 if (openButton) {
 
-  openButton.addEventListener(
-    "click",
-    async function () {
+    openButton.addEventListener("click", async function () {
 
-      if (!surpriseData) {
+        if (!birthdayData) {
+            alert("Birthday surprise not found 😭");
+            return;
+        }
 
-        return;
 
-      }
+        const enteredPassword =
+            $("unlock").value;
 
 
-      const enteredPassword =
-        $("unlock").value;
+        if (
+            enteredPassword !==
+            birthdayData.password
+        ) {
 
+            $("wrong").textContent =
+                "Wrong password 😭 Try again.";
 
-      if (
-        enteredPassword !==
-        surpriseData.password
-      ) {
+            $("unlock").focus();
 
-        $("wrong")
-          .textContent =
-          "Wrong password 😭";
+            return;
+        }
 
 
-        $("unlock")
-          .focus();
+        $("wrong").textContent = "";
 
 
-        return;
+        // Hide password page
+        $("locked").classList.add("hidden");
 
-      }
 
+        // Show surprise
+        $("surprise").classList.remove("hidden");
 
-      $("wrong")
-        .textContent =
-        "";
 
+        // Name
+        $("sname").textContent =
+            birthdayData.name || "You";
 
-      /*
-        Hide lock page
-      */
 
-      $("locked")
-        .classList
-        .add("hidden");
+        // Wish
+        $("swish").textContent =
+            birthdayData.wish || "";
 
 
-      /*
-        Show surprise
-      */
-
-      $("surprise")
-        .classList
-        .remove("hidden");
-
-
-      $("sname")
-        .textContent =
-        surpriseData.name ||
-        "You";
-
-
-      $("swish")
-        .textContent =
-        surpriseData.wish ||
-        "";
-
-
-      /*
-        Create vertical gallery
-      */
-
-      createGallery(
-        Array.isArray(
-          surpriseData.photos
-        )
-          ? surpriseData.photos
-          : []
-      );
-
-
-      startConfetti();
-
-
-      /*
-        Password button click is
-        a real user gesture,
-        so music has a better chance
-        of playing on mobile.
-      */
-
-      await startMusic();
-
-    }
-  );
-
-}
-
-
-/*
-=========================================================
- ENTER KEY
-=========================================================
-*/
-
-const unlock =
-  $("unlock");
-
-
-if (unlock) {
-
-  unlock.addEventListener(
-    "keydown",
-    function (event) {
-
-      if (
-        event.key ===
-        "Enter"
-      ) {
-
-        event.preventDefault();
-
-        $("open").click();
-
-      }
-
-    }
-  );
-
-}
-
-
-/*
-=========================================================
- VERTICAL GALLERY
-=========================================================
-*/
-
-function createGallery(
-  images
-) {
-
-  const gallery =
-    $("gallery");
-
-
-  if (!gallery) {
-    return;
-  }
-
-
-  gallery.innerHTML =
-    "";
-
-
-  const rotations = [
-    "-3deg",
-    "2deg",
-    "-2deg",
-    "3deg",
-    "-1deg"
-  ];
-
-
-  images
-    .slice(
-      0,
-      MAX_PHOTOS
-    )
-    .forEach(
-      function (
-        src,
-        index
-      ) {
-
-        const card =
-          document.createElement(
-            "div"
-          );
-
-
-        card.className =
-          "photo-card";
-
-
-        card.style.setProperty(
-          "--rotation",
-          rotations[
-            index %
-            rotations.length
-          ]
+        // Photos
+        createGallery(
+            birthdayData.photos || []
         );
 
 
-        const image =
-          document.createElement(
-            "img"
-          );
+        // Animation
+        startConfetti();
 
 
-        image.src =
-          src;
+        // Music
+        await startMusic();
 
-
-        image.alt =
-          `Memory ${index + 1}`;
-
-
-        image.loading =
-          "lazy";
-
-
-        image.decoding =
-          "async";
-
-
-        card.appendChild(
-          image
-        );
-
-
-        gallery.appendChild(
-          card
-        );
-
-      }
-    );
-
+    });
 }
 
 
-/*
-=========================================================
- MUSIC
-=========================================================
-*/
+// =====================================================
+// ENTER KEY
+// =====================================================
 
-const music =
-  $("bgMusic");
+const unlockInput = $("unlock");
+
+if (unlockInput) {
+
+    unlockInput.addEventListener("keydown", function (event) {
+
+        if (event.key === "Enter") {
+
+            event.preventDefault();
+
+            $("open").click();
+        }
+
+    });
+}
 
 
-const musicButton =
-  $("musicBtn");
+// =====================================================
+// PHOTO GALLERY
+// =====================================================
+
+function createGallery(images) {
+
+    const gallery = $("gallery");
+
+    if (!gallery) return;
+
+    gallery.innerHTML = "";
 
 
-const musicStatus =
-  $("musicStatus");
+    const rotations = [
+        "-3deg",
+        "2deg",
+        "-2deg",
+        "3deg",
+        "-1deg"
+    ];
+
+
+    images
+        .slice(0, MAX_PHOTOS)
+        .forEach((src, index) => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "photo-card";
+
+
+            card.style.setProperty(
+                "--rotation",
+                rotations[
+                    index % rotations.length
+                ]
+            );
+
+
+            const image =
+                document.createElement("img");
+
+            image.src = src;
+
+            image.alt =
+                `Birthday memory ${index + 1}`;
+
+            image.loading = "lazy";
+
+
+            card.appendChild(image);
+
+            gallery.appendChild(card);
+
+        });
+}
+
+
+// =====================================================
+// MUSIC
+// =====================================================
+
+const music = $("bgMusic");
+const musicButton = $("musicBtn");
+const musicStatus = $("musicStatus");
 
 
 async function startMusic() {
 
-  if (!music) {
-
-    return false;
-
-  }
+    if (!music) return false;
 
 
-  try {
+    try {
 
-    music.volume =
-      0.65;
+        music.volume = 0.65;
 
-
-    await music.play();
+        await music.play();
 
 
-    if (musicButton) {
-
-      musicButton.textContent =
-        "🔊 Music On";
-
-    }
-
-
-    if (musicStatus) {
-
-      musicStatus.textContent =
-        "Background music is playing 💗";
-
-    }
-
-
-    return true;
-
-
-  } catch (error) {
-
-    console.log(
-      "Music needs manual tap:",
-      error
-    );
-
-
-    if (musicButton) {
-
-      musicButton.textContent =
-        "🎵 Play Music";
-
-    }
-
-
-    if (musicStatus) {
-
-      musicStatus.textContent =
-        "Tap Play Music to start 🎵";
-
-    }
-
-
-    return false;
-
-  }
-
-}
-
-
-if (
-  musicButton &&
-  music
-) {
-
-  musicButton.addEventListener(
-    "click",
-    async function () {
-
-      if (
-        music.paused
-      ) {
-
-        await startMusic();
-
-      } else {
-
-        music.pause();
-
-
-        this.textContent =
-          "🎵 Play Music";
+        if (musicButton) {
+            musicButton.textContent =
+                "🔊 Music On";
+        }
 
 
         if (musicStatus) {
-
-          musicStatus.textContent =
-            "Music paused 💗";
-
+            musicStatus.textContent =
+                "Background music is playing 💗";
         }
 
-      }
 
+        return true;
+
+
+    } catch (error) {
+
+        if (musicButton) {
+            musicButton.textContent =
+                "🎵 Play Music";
+        }
+
+
+        if (musicStatus) {
+            musicStatus.textContent =
+                "Tap Play Music to start 🎵";
+        }
+
+
+        return false;
     }
-  );
-
 }
 
 
-/*
-=========================================================
- MUSIC ERROR
-=========================================================
-*/
+if (musicButton && music) {
 
-if (music) {
+    musicButton.addEventListener(
+        "click",
+        async function () {
 
-  music.addEventListener(
-    "error",
-    function () {
+            if (music.paused) {
 
-      if (musicStatus) {
+                await startMusic();
 
-        musicStatus.textContent =
-          "Keep music.mp3 beside index.html 🎵";
+            } else {
 
-      }
+                music.pause();
 
-    }
-  );
+                this.textContent =
+                    "🎵 Play Music";
 
+                if (musicStatus) {
+                    musicStatus.textContent =
+                        "Music paused 💗";
+                }
+            }
+
+        }
+    );
 }
 
 
-/*
-=========================================================
- CONFETTI
-=========================================================
-*/
+// =====================================================
+// CONFETTI
+// =====================================================
 
 function startConfetti() {
 
-  const emojis = [
-    "🎉",
-    "💗",
-    "✨",
-    "🎈",
-    "🌸",
-    "🥳",
-    "💕"
-  ];
+    const emojis = [
+        "🎉",
+        "💗",
+        "✨",
+        "🎈",
+        "🌸",
+        "🥳",
+        "💕",
+        "🎂"
+    ];
 
 
-  for (
-    let i = 0;
-    i < 35;
-    i++
-  ) {
+    for (let i = 0; i < 40; i++) {
 
-    const item =
-      document.createElement(
-        "span"
-      );
+        const item =
+            document.createElement("span");
 
 
-    item.textContent =
-      emojis[
-        Math.floor(
-          Math.random() *
-          emojis.length
-        )
-      ];
+        item.textContent =
+            emojis[
+                Math.floor(
+                    Math.random() *
+                    emojis.length
+                )
+            ];
 
 
-    item.style.position =
-      "fixed";
+        item.style.position =
+            "fixed";
+
+        item.style.left =
+            Math.random() * 100 + "vw";
+
+        item.style.top =
+            "-40px";
+
+        item.style.fontSize =
+            18 + Math.random() * 20 + "px";
+
+        item.style.zIndex =
+            "9999";
+
+        item.style.pointerEvents =
+            "none";
+
+        item.style.transition =
+            "transform 3s linear, opacity 3s";
 
 
-    item.style.left =
-      Math.random() *
-      100 +
-      "vw";
+        document.body.appendChild(item);
 
 
-    item.style.top =
-      "-40px";
+        requestAnimationFrame(() => {
+
+            item.style.transform =
+                `translateY(110vh) rotate(${
+                    Math.random() * 600
+                }deg)`;
+
+            item.style.opacity = "0";
+
+        });
 
 
-    item.style.fontSize =
-      18 +
-      Math.random() *
-      20 +
-      "px";
+        setTimeout(() => {
 
+            item.remove();
 
-    item.style.zIndex =
-      "9999";
-
-
-    item.style.pointerEvents =
-      "none";
-
-
-    item.style.transition =
-      "transform 3s linear, opacity 3s";
-
-
-    document.body.appendChild(
-      item
-    );
-
-
-    requestAnimationFrame(
-      () => {
-
-        item.style.transform =
-          `translateY(110vh) rotate(${
-            Math.random() * 600
-          }deg)`;
-
-
-        item.style.opacity =
-          "0";
-
-      }
-    );
-
-
-    setTimeout(
-      () => {
-
-        item.remove();
-
-      },
-      3200
-    );
-
-  }
-
+        }, 3200);
+    }
 }
-
-
-/*
-=========================
