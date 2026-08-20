@@ -211,59 +211,61 @@ if (createButton) {
 }
 
 
-// ===============================
-// COPY LINK
-// ===============================
+// =====================================================
+// COPY LINK - MOBILE + LAPTOP
+// =====================================================
 
-const copyButton = $("copy");
+const copyButton = document.getElementById("copy");
 
 if (copyButton) {
 
-    copyButton.addEventListener("click", async function () {
+    copyButton.addEventListener("click", function () {
 
-        const linkInput = $("link");
+        const linkInput = document.getElementById("link");
 
         if (!linkInput || !linkInput.value) {
-
-            alert(
-                "First Create Surprise button press pannu ❤️"
-            );
-
+            alert("First create the surprise link ❤️");
             return;
         }
 
+        // Select the link
+        linkInput.focus();
+        linkInput.select();
+        linkInput.setSelectionRange(0, linkInput.value.length);
+
+        // Old browser/mobile friendly copy
+        let copied = false;
 
         try {
+            copied = document.execCommand("copy");
+        } catch (error) {
+            copied = false;
+        }
 
-            await navigator.clipboard.writeText(
-                linkInput.value
-            );
+        if (copied) {
 
-            this.textContent = "Copied! ❤️";
+            copyButton.textContent = "Copied! ❤️";
 
-            setTimeout(() => {
-
-                this.textContent =
+            setTimeout(function () {
+                copyButton.textContent =
                     "Copy Surprise Link ❤️";
-
             }, 2000);
 
+        } else {
 
-        } catch (error) {
-
-            linkInput.focus();
-            linkInput.select();
-
-            linkInput.setSelectionRange(
-                0,
-                linkInput.value.length
-            );
+            // If automatic copy fails,
+            // keep link selected for manual copy
+            copyButton.textContent =
+                "Link Selected 📋";
 
             alert(
-                "Link selected. Copy manually 📋"
+                "Link selected ❤️\n\n" +
+                "Long press the link → Copy"
             );
         }
+
     });
+
 }
 
 
