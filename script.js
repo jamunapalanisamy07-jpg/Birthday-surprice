@@ -1,48 +1,306 @@
 "use strict";
 
-// =====================================================
-// ELEMENT HELPER
-// =====================================================
+const MAX_PHOTOS = 15;
 
 const $ = (id) => document.getElementById(id);
 
-
-// =====================================================
-// SETTINGS
-// =====================================================
-
-const MAX_PHOTOS = 15;
-
 let selectedFiles = [];
 
+// ===============================
+// PHOTO SELECT
+// ===============================
 
-// =====================================================
-// GET DATA FROM URL HASH
-// =====================================================
+const fileInput = $("files");
+
+if (fileInput) {
+    fileInput.addEventListener("change", function () {
+
+        selectedFiles = Array.from(this.files)
+            .filter(file => file.type.startsWith("image/"))
+            .slice(0, MAX_PHOTOS);
+
+        if (this.files.length > MAX_PHOTOS) {
+            alert("Maximum 15 photos only 📸");
+        }
+
+        const count = $("photoCount");
+
+        if (count) {
+            count.textContent =
+                `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
+        }
+
+        showThumbnails();
+    });
+}
+
+
+// ===============================
+// THUMBNAILS
+// ===============================
+
+function showThumbnails() {
+
+    const thumbs = $("thumbs");
+
+    if (!thumbs) return;
+
+    thumbs.innerHTML = "";
+
+    selectedFiles.forEach(file => {
+
+        const reader = new FileReader();
+
+        reader.onload = function () {
+
+            const img = document.createElement("img");
+
+            img.src = reader.result;
+            img.alt = "Selected photo";
+
+            thumbs.appendChild(img);
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+
+// ===============================
+// FILE TO BASE64
+// ===============================
+
+function fileToBase64(file) {
+
+    return new Promise((resolve, reject) => {
+
+        const reader = new FileReader();
+
+        reader.onload = () => resolve(reader.result);
+
+        reader.onerror = () =>
+            reject(new Error("Unable to read photo"));
+
+        reader.readAsDataURL(file);
+    });
+}
+
+
+// ===============================
+// CREATE SURPRISE
+// ===============================
+
+const createButton = $("create");
+
+if (createButton) {
+
+    createButton.addEventListener("click", async function () {
+
+        const nameInput = $("name");
+        const passwordInput = $("pass");
+        const wishInput = $("wish");
+
+        const name = nameInput.value.trim();
+        const password = passwordInput.value;
+
+        const wish =
+            wishInput.value.trim() ||
+            "Wishing you a very happy birthday! 🎂❤️";
+
+
+        if (!name) {
+            alert("Please enter the name 💗");
+            nameInput.focus();
+            return;
+        }
+
+        if (!password) {
+            alert("Please create a password 🔐");
+            passwordInput.focus();
+            return;
+        }
+
+
+        createButton.disabled = true;
+        createButton.textContent = "Creating surprise... ⏳";
+
+
+        try {
+
+            const photos = [];
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+
+                createButton.textContent =
+                    `Preparing photo ${i + 1}/${selectedFiles.length}... 📸`;
+
+                const photo =
+                    await fileToBase64(selectedFiles[i]);
+
+                photos.push(photo);
+            }
+
+
+            const birthdayData = {
+                name: name,
+                password: password,
+                wish: wish,
+                photos: photos
+            };
+
+
+            const json =
+                JSON.stringify(birthdayData);
+
+
+            const encodedData =
+                btoa(
+                    encodeURIComponent(json)
+                );
+
+
+            const baseURL =
+                window.location.href
+                    .split("#")[0];
+
+
+            const shareLink =
+                baseURL + "#data=" + encodedData;
+
+
+            const linkInput = $("link");
+            const result = $("result");
+
+
+            if (linkInput) {
+                linkInput.value = shareLink;
+            }
+
+
+            if (result) {
+
+                result.classList.remove("hidden");
+
+                result.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+
+
+            createButton.textContent =
+                "Surprise Created ❤️";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                "Link create panna mudiyala 😭\n\n" +
+                error.message
+            );
+
+            createButton.textContent =
+                "Create Surprise 💗";
+        }
+
+
+        createButton.disabled = false;
+    });
+}
+
+
+// ===============================
+// COPY LINK
+// ===============================
+
+const copyButton = $("copy");
+
+if (copyButton) {
+
+    copyButton.addEventListener("click", async function () {
+
+        const linkInput = $("link");
+
+        if (!linkInput || !linkInput.value) {
+
+            alert(
+                "First Create Surprise button press pannu ❤️"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                linkInput.value
+            );
+
+            this.textContent = "Copied! ❤️";
+
+            setTimeout(() => {
+
+                this.textContent =
+                    "Copy Surprise Link ❤️";
+
+            }, 2000);
+
+
+        } catch (error) {
+
+            linkInput.focus();
+            linkInput.select();
+
+            linkInput.setSelectionRange(
+                0,
+                linkInput.value.length
+            );
+
+            alert(
+                "Link selected. Copy manually 📋"
+            );
+        }
+    });
+}
+
+
+// ===============================
+// READ SHARED LINK
+// ===============================
 
 function getBirthdayData() {
 
-    const hash = window.location.hash;
+    const hash =
+        window.location.hash;
+
 
     if (!hash.startsWith("#data=")) {
         return null;
     }
 
+
     try {
 
-        const encoded = hash.substring(6);
+        const encoded =
+            hash.substring(6);
+
 
         const json =
             decodeURIComponent(
                 atob(encoded)
             );
 
+
         return JSON.parse(json);
+
 
     } catch (error) {
 
         console.error(
-            "Unable to read birthday data:",
+            "Invalid birthday data:",
             error
         );
 
@@ -51,456 +309,28 @@ function getBirthdayData() {
 }
 
 
-// =====================================================
-// PHOTO SELECTION
-// =====================================================
-
-const fileInput = $("files");
-
-if (fileInput) {
-
-    fileInput.addEventListener("change", function () {
-
-        selectedFiles =
-            Array.from(this.files)
-                .filter(file =>
-                    file.type.startsWith("image/")
-                )
-                .slice(0, MAX_PHOTOS);
-
-
-        if (this.files.length > MAX_PHOTOS) {
-
-            alert(
-                "Maximum 15 photos only 📸"
-            );
-        }
-
-
-        updatePhotoCount();
-
-        showThumbnails();
-    });
-}
-
-
-// =====================================================
-// PHOTO COUNT
-// =====================================================
-
-function updatePhotoCount() {
-
-    const photoCount =
-        $("photoCount");
-
-    if (!photoCount) return;
-
-    photoCount.textContent =
-        `${selectedFiles.length} / ${MAX_PHOTOS} photos selected`;
-}
-
-
-// =====================================================
-// SHOW THUMBNAILS
-// =====================================================
-
-function showThumbnails() {
-
-    const thumbs =
-        $("thumbs");
-
-    if (!thumbs) return;
-
-    thumbs.innerHTML = "";
-
-
-    selectedFiles.forEach(file => {
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload = function () {
-
-            const img =
-                document.createElement("img");
-
-            img.src =
-                reader.result;
-
-            img.alt =
-                "Selected photo";
-
-            thumbs.appendChild(img);
-        };
-
-
-        reader.readAsDataURL(file);
-    });
-}
-
-
-// =====================================================
-// FILE → BASE64
-// =====================================================
-
-function fileToBase64(file) {
-
-    return new Promise((resolve, reject) => {
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload = () => {
-
-            resolve(reader.result);
-        };
-
-
-        reader.onerror = () => {
-
-            reject(
-                new Error(
-                    "Photo read panna mudiyala"
-                )
-            );
-        };
-
-
-        reader.readAsDataURL(file);
-    });
-}
-
-
-// =====================================================
-// CREATE SURPRISE
-// =====================================================
-
-const createButton =
-    $("create");
-
-
-if (createButton) {
-
-    createButton.addEventListener(
-        "click",
-        async function () {
-
-            const nameInput =
-                $("name");
-
-            const passwordInput =
-                $("pass");
-
-            const wishInput =
-                $("wish");
-
-
-            const name =
-                nameInput.value.trim();
-
-            const password =
-                passwordInput.value;
-
-            const wish =
-                wishInput.value.trim() ||
-                "Wishing you a very happy birthday! 🎂❤️";
-
-
-            // -----------------------------------------
-            // VALIDATION
-            // -----------------------------------------
-
-            if (!name) {
-
-                alert(
-                    "Please enter the name 💗"
-                );
-
-                nameInput.focus();
-
-                return;
-            }
-
-
-            if (!password) {
-
-                alert(
-                    "Please create a password 🔐"
-                );
-
-                passwordInput.focus();
-
-                return;
-            }
-
-
-            // -----------------------------------------
-            // BUTTON
-            // -----------------------------------------
-
-            createButton.disabled = true;
-
-            createButton.textContent =
-                "Creating Surprise... ⏳";
-
-
-            try {
-
-                // -------------------------------------
-                // PHOTOS
-                // -------------------------------------
-
-                const photos = [];
-
-
-                for (
-                    let i = 0;
-                    i < selectedFiles.length;
-                    i++
-                ) {
-
-                    createButton.textContent =
-                        `Preparing photo ${i + 1}/${selectedFiles.length}... 📸`;
-
-
-                    const base64 =
-                        await fileToBase64(
-                            selectedFiles[i]
-                        );
-
-
-                    photos.push(base64);
-                }
-
-
-                // -------------------------------------
-                // DATA
-                // -------------------------------------
-
-                const birthdayData = {
-
-                    name: name,
-
-                    password: password,
-
-                    wish: wish,
-
-                    photos: photos
-                };
-
-
-                // -------------------------------------
-                // JSON
-                // -------------------------------------
-
-                const json =
-                    JSON.stringify(
-                        birthdayData
-                    );
-
-
-                // -------------------------------------
-                // ENCODE
-                // -------------------------------------
-
-                const encodedData =
-                    btoa(
-                        encodeURIComponent(json)
-                    );
-
-
-                // -------------------------------------
-                // CURRENT PAGE URL
-                // -------------------------------------
-
-                const baseURL =
-                    window.location.href
-                        .split("#")[0];
-
-
-                // -------------------------------------
-                // CREATE SHARE LINK
-                // -------------------------------------
-
-                const shareLink =
-                    baseURL +
-                    "#data=" +
-                    encodedData;
-
-
-                console.log(
-                    "SURPRISE LINK:",
-                    shareLink
-                );
-
-
-                // -------------------------------------
-                // SHOW RESULT
-                // -------------------------------------
-
-                const linkInput =
-                    $("link");
-
-                const result =
-                    $("result");
-
-
-                if (linkInput) {
-
-                    linkInput.value =
-                        shareLink;
-                }
-
-
-                if (result) {
-
-                    result.classList.remove(
-                        "hidden"
-                    );
-
-
-                    result.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-                }
-
-
-                createButton.textContent =
-                    "Surprise Created ❤️";
-
-
-            } catch (error) {
-
-                console.error(
-                    "CREATE ERROR:",
-                    error
-                );
-
-
-                alert(
-                    "Link create panna mudiyala 😭\n\n" +
-                    error.message
-                );
-
-
-                createButton.textContent =
-                    "Create Surprise 💗";
-            }
-
-
-            createButton.disabled = false;
-        }
-    );
-}
-
-
-// =====================================================
-// COPY LINK
-// =====================================================
-
-const copyButton =
-    $("copy");
-
-
-if (copyButton) {
-
-    copyButton.addEventListener(
-        "click",
-        async function () {
-
-            const linkInput =
-                $("link");
-
-
-            if (
-                !linkInput ||
-                !linkInput.value
-            ) {
-
-                alert(
-                    "First Create Surprise button press pannu ❤️"
-                );
-
-                return;
-            }
-
-
-            try {
-
-                await navigator.clipboard.writeText(
-                    linkInput.value
-                );
-
-
-                this.textContent =
-                    "Copied! ❤️";
-
-
-                setTimeout(() => {
-
-                    this.textContent =
-                        "Copy Surprise Link ❤️";
-
-                }, 2000);
-
-
-            } catch (error) {
-
-                linkInput.focus();
-
-                linkInput.select();
-
-                linkInput.setSelectionRange(
-                    0,
-                    linkInput.value.length
-                );
-
-
-                alert(
-                    "Link selected. Copy manually 📋"
-                );
-            }
-        }
-    );
-}
-
-
-// =====================================================
-// OPEN SHARED SURPRISE
-// =====================================================
-
 const birthdayData =
     getBirthdayData();
 
 
+// ===============================
+// SHOW PASSWORD PAGE
+// ===============================
+
 if (birthdayData) {
 
-    const creator =
-        $("creator");
-
-    const locked =
-        $("locked");
-
-    const lockedName =
-        $("lockedName");
+    const creator = $("creator");
+    const locked = $("locked");
+    const lockedName = $("lockedName");
 
 
     if (creator) {
-
-        creator.classList.add(
-            "hidden"
-        );
+        creator.classList.add("hidden");
     }
 
 
     if (locked) {
-
-        locked.classList.remove(
-            "hidden"
-        );
+        locked.classList.remove("hidden");
     }
 
 
@@ -513,187 +343,142 @@ if (birthdayData) {
 }
 
 
-// =====================================================
-// OPEN BUTTON
-// =====================================================
+// ===============================
+// OPEN SURPRISE
+// ===============================
 
-const openButton =
-    $("open");
-
+const openButton = $("open");
 
 if (openButton) {
 
-    openButton.addEventListener(
-        "click",
-        async function () {
+    openButton.addEventListener("click", async function () {
 
-            if (!birthdayData) {
+        if (!birthdayData) {
 
-                alert(
-                    "Birthday surprise not found 😭"
-                );
-
-                return;
-            }
-
-
-            const unlockInput =
-                $("unlock");
-
-
-            const enteredPassword =
-                unlockInput.value;
-
-
-            if (
-                enteredPassword !==
-                birthdayData.password
-            ) {
-
-                const wrong =
-                    $("wrong");
-
-
-                if (wrong) {
-
-                    wrong.textContent =
-                        "Wrong password 😭 Try again.";
-                }
-
-
-                unlockInput.focus();
-
-                return;
-            }
-
-
-            // -----------------------------------------
-            // CORRECT PASSWORD
-            // -----------------------------------------
-
-            const locked =
-                $("locked");
-
-            const surprise =
-                $("surprise");
-
-
-            if (locked) {
-
-                locked.classList.add(
-                    "hidden"
-                );
-            }
-
-
-            if (surprise) {
-
-                surprise.classList.remove(
-                    "hidden"
-                );
-            }
-
-
-            // -----------------------------------------
-            // NAME
-            // -----------------------------------------
-
-            const sname =
-                $("sname");
-
-
-            if (sname) {
-
-                sname.textContent =
-                    birthdayData.name ||
-                    "You";
-            }
-
-
-            // -----------------------------------------
-            // MESSAGE
-            // -----------------------------------------
-
-            const swish =
-                $("swish");
-
-
-            if (swish) {
-
-                swish.textContent =
-                    birthdayData.wish || "";
-            }
-
-
-            // -----------------------------------------
-            // PHOTOS
-            // -----------------------------------------
-
-            createGallery(
-                birthdayData.photos || []
+            alert(
+                "Birthday surprise not found 😭"
             );
 
-
-            // -----------------------------------------
-            // CONFETTI
-            // -----------------------------------------
-
-            startConfetti();
-
-
-            // -----------------------------------------
-            // MUSIC
-            // -----------------------------------------
-
-            await startMusic();
+            return;
         }
-    );
+
+
+        const unlockInput =
+            $("unlock");
+
+        const enteredPassword =
+            unlockInput.value;
+
+
+        if (
+            enteredPassword !==
+            birthdayData.password
+        ) {
+
+            const wrong =
+                $("wrong");
+
+            if (wrong) {
+
+                wrong.textContent =
+                    "Wrong password 😭 Try again.";
+            }
+
+            unlockInput.focus();
+
+            return;
+        }
+
+
+        const wrong =
+            $("wrong");
+
+        if (wrong) {
+            wrong.textContent = "";
+        }
+
+
+        const locked =
+            $("locked");
+
+        const surprise =
+            $("surprise");
+
+
+        if (locked) {
+            locked.classList.add("hidden");
+        }
+
+
+        if (surprise) {
+            surprise.classList.remove("hidden");
+        }
+
+
+        const sname =
+            $("sname");
+
+        if (sname) {
+
+            sname.textContent =
+                birthdayData.name ||
+                "You";
+        }
+
+
+        const swish =
+            $("swish");
+
+        if (swish) {
+
+            swish.textContent =
+                birthdayData.wish || "";
+        }
+
+
+        createGallery(
+            birthdayData.photos || []
+        );
+
+
+        startConfetti();
+
+        await startMusic();
+    });
 }
 
 
-// =====================================================
-// ENTER KEY FOR PASSWORD
-// =====================================================
+// ===============================
+// ENTER KEY
+// ===============================
 
-const unlockInput =
-    $("unlock");
-
+const unlockInput = $("unlock");
 
 if (unlockInput) {
 
-    unlockInput.addEventListener(
-        "keydown",
-        function (event) {
+    unlockInput.addEventListener("keydown", function (event) {
 
-            if (event.key === "Enter") {
+        if (event.key === "Enter") {
 
-                event.preventDefault();
+            event.preventDefault();
 
-                const openButton =
-                    $("open");
-
-                if (openButton) {
-
-                    openButton.click();
-                }
+            if ($("open")) {
+                $("open").click();
             }
         }
-    );
+    });
 }
 
 
-// =====================================================
-// PHOTO GALLERY
-// =====================================================
+// ===============================
+// GALLERY
+// ===============================
 
 function createGallery(images) {
 
-    const gallery =
-        $("gallery");
-
+    const gallery = $("gallery");
 
     if (!gallery) return;
-
 
     gallery.innerHTML = "";
 
@@ -714,7 +499,6 @@ function createGallery(images) {
             const card =
                 document.createElement("div");
 
-
             card.className =
                 "photo-card";
 
@@ -730,55 +514,42 @@ function createGallery(images) {
             const image =
                 document.createElement("img");
 
-
-            image.src =
-                src;
-
+            image.src = src;
 
             image.alt =
                 `Birthday memory ${index + 1}`;
 
+            image.loading = "lazy";
 
-            image.loading =
-                "lazy";
-
-
-            card.appendChild(
-                image
-            );
+            image.decoding = "async";
 
 
-            gallery.appendChild(
-                card
-            );
+            card.appendChild(image);
+
+            gallery.appendChild(card);
         });
 }
 
 
-// =====================================================
+// ===============================
 // MUSIC
-// =====================================================
+// ===============================
 
-const music =
-    $("bgMusic");
-
-const musicButton =
-    $("musicBtn");
-
-const musicStatus =
-    $("musicStatus");
+const music = $("bgMusic");
+const musicButton = $("musicBtn");
+const musicStatus = $("musicStatus");
 
 
 async function startMusic() {
 
-    if (!music) return false;
+    if (!music) {
+        return false;
+    }
 
 
     try {
 
-        music.volume =
-            0.65;
-
+        music.volume = 0.65;
 
         await music.play();
 
@@ -821,14 +592,11 @@ async function startMusic() {
 }
 
 
-// =====================================================
+// ===============================
 // MUSIC BUTTON
-// =====================================================
+// ===============================
 
-if (
-    musicButton &&
-    music
-) {
+if (musicButton && music) {
 
     musicButton.addEventListener(
         "click",
@@ -841,7 +609,6 @@ if (
             } else {
 
                 music.pause();
-
 
                 this.textContent =
                     "🎵 Play Music";
@@ -858,9 +625,9 @@ if (
 }
 
 
-// =====================================================
+// ===============================
 // CONFETTI
-// =====================================================
+// ===============================
 
 function startConfetti() {
 
@@ -876,11 +643,7 @@ function startConfetti() {
     ];
 
 
-    for (
-        let i = 0;
-        i < 40;
-        i++
-    ) {
+    for (let i = 0; i < 40; i++) {
 
         const item =
             document.createElement("span");
@@ -895,39 +658,25 @@ function startConfetti() {
             ];
 
 
-        item.style.position =
-            "fixed";
-
+        item.style.position = "fixed";
 
         item.style.left =
             Math.random() * 100 + "vw";
 
-
-        item.style.top =
-            "-40px";
-
+        item.style.top = "-40px";
 
         item.style.fontSize =
-            18 +
-            Math.random() * 20 +
-            "px";
+            18 + Math.random() * 20 + "px";
 
+        item.style.zIndex = "9999";
 
-        item.style.zIndex =
-            "9999";
-
-
-        item.style.pointerEvents =
-            "none";
-
+        item.style.pointerEvents = "none";
 
         item.style.transition =
             "transform 3s linear, opacity 3s";
 
 
-        document.body.appendChild(
-            item
-        );
+        document.body.appendChild(item);
 
 
         requestAnimationFrame(() => {
@@ -937,9 +686,7 @@ function startConfetti() {
                     Math.random() * 600
                 }deg)`;
 
-
-            item.style.opacity =
-                "0";
+            item.style.opacity = "0";
         });
 
 
